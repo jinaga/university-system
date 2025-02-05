@@ -32,12 +32,24 @@ The system consists of several components running in Docker containers:
    export ENVIRONMENT_PUBLIC_KEY=your-public-key
    ```
 
-3. Start the services:
+3. Pull the latest images (optional but recommended):
+   ```bash
+   docker compose pull
+   ```
+
+4. Build the services:
+   ```bash
+   docker compose build
+   ```
+
+5. Start the services:
    ```bash
    docker compose up --build
    ```
 
-This will build the University.Importer Docker image and start all services. The importer will automatically populate the initial course data.
+This will build the University.Importer and University.Indexer Docker images and start all services. The importer will automatically populate the initial course data. The indexer will update the Elasticsearch index.
+
+If you make any changes to source code, please remember to run `docker compose build`. Then use `docker compose down` and `docker compose up` to create new containers for those rebuilt images.
 
 ### Environment Variables
 
