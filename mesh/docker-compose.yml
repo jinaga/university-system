@@ -28,5 +28,15 @@ services:
       - ./authentication:/var/lib/replicator/authentication:ro
       - ./subscriptions:/var/lib/replicator/subscriptions:ro
 
+  importer:
+    build:
+      context: ../src
+      dockerfile: University.Importer/Dockerfile
+    environment:
+      - REPLICATOR_URL=http://back-end-replicator:8080
+      - ENVIRONMENT_PUBLIC_KEY=default-public-key
+    depends_on:
+      - back-end-replicator
+
 volumes:
   esdata:
