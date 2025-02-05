@@ -38,5 +38,17 @@ services:
     depends_on:
       - back-end-replicator
 
+  indexer:
+    build:
+      context: ../src
+      dockerfile: University.Indexer/Dockerfile
+    environment:
+      - REPLICATOR_URL=http://back-end-replicator:8080/jinaga
+      - ENVIRONMENT_PUBLIC_KEY=default-public-key
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    depends_on:
+      - back-end-replicator
+      - elasticsearch
+
 volumes:
   esdata:
