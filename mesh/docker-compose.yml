@@ -33,7 +33,7 @@ services:
       context: ../src
       dockerfile: University.Importer/Dockerfile
     environment:
-      - REPLICATOR_URL=http://back-end-replicator:8080
+      - REPLICATOR_URL=http://back-end-replicator:8080/jinaga
       - ENVIRONMENT_PUBLIC_KEY=default-public-key
     depends_on:
       - back-end-replicator
