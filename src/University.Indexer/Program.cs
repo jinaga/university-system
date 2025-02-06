@@ -27,30 +27,9 @@ if (REPLICATOR_URL == null || ENVIRONMENT_PUBLIC_KEY == null || ELASTICSEARCH_UR
 
 Console.WriteLine("Indexing course offerings...");
 
-var settings = new ConnectionSettings(new Uri(ELASTICSEARCH_URL))
-    .DefaultIndex("offerings");
-var client = new ElasticClient(settings);
+var elasticsearchClient = new ElasticsearchClientProxy(ELASTICSEARCH_URL);
 
-// Ensure index exists with proper mappings
-var existsResponse = await client.IndexExistsAsync("offerings");
-if (!existsResponse.Exists)
-{
-    await client.CreateIndexAsync("offerings", c => c
-        .Mappings(m => m
-            .Map<SearchRecord>(mm => mm
-                .Properties(p => p
-                    .Keyword(k => k.Name(n => n.Id))
-                    .Keyword(k => k.Name(n => n.CourseCode))
-                    .Text(t => t.Name(n => n.CourseName))
-                    .Keyword(k => k.Name(n => n.Days))
-                    .Keyword(k => k.Name(n => n.Time))
-                    .Keyword(k => k.Name(n => n.Instructor))
-                    .Keyword(k => k.Name(n => n.Location))
-                )
-            )
-        )
-    );
-}
+await elasticsearchClient.Initialize();
 
 var j = JinagaClient.Create(options =>
 {
@@ -80,16 +59,12 @@ var indexInsertSubscription = j.Subscribe(offeringsToIndex, currentSemester, asy
         Instructor = "TBA",
         Location = "TBA"
     };
-    
-    var response = await client.IndexDocumentAsync(searchRecord);
-    if (response.IsValid)
+    bool indexed = await elasticsearchClient.IndexRecord(searchRecord);
+
+    if (indexed)
     {
         await j.Fact(new SearchIndexRecord(offering, recordId));
         Console.WriteLine($"Indexed {offering.course.code} {offering.course.name}");
-    }
-    else
-    {
-        Console.WriteLine($"Failed to index {offering.course.code}: {response.DebugInformation}");
     }
 });
 

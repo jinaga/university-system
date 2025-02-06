@@ -1,6 +1,6 @@
 namespace University.Indexer;
 
-class SearchRecord
+public class SearchRecord
 {
     public required string Id { get; init; }
     public required string CourseCode { get; init; }
