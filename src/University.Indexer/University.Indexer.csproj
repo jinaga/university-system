@@ -11,4 +11,8 @@
     <ProjectReference Include="..\University.Model\University.Model.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="NEST" Version="6.8.11" />
+  </ItemGroup>
+
 </Project>

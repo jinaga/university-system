@@ -2,12 +2,13 @@
 using Jinaga.Extensions;
 using University.Indexer;
 using University.Model;
-using System.Threading;
+using Nest;
 
 var REPLICATOR_URL = Environment.GetEnvironmentVariable("REPLICATOR_URL");
 var ENVIRONMENT_PUBLIC_KEY = Environment.GetEnvironmentVariable("ENVIRONMENT_PUBLIC_KEY");
+var ELASTICSEARCH_URL = Environment.GetEnvironmentVariable("ELASTICSEARCH_URL");
 
-if (REPLICATOR_URL == null || ENVIRONMENT_PUBLIC_KEY == null)
+if (REPLICATOR_URL == null || ENVIRONMENT_PUBLIC_KEY == null || ELASTICSEARCH_URL == null)
 {
     if (REPLICATOR_URL == null)
     {
@@ -17,10 +18,39 @@ if (REPLICATOR_URL == null || ENVIRONMENT_PUBLIC_KEY == null)
     {
         Console.WriteLine("Please set the environment variable ENVIRONMENT_PUBLIC_KEY.");
     }
+    if (ELASTICSEARCH_URL == null)
+    {
+        Console.WriteLine("Please set the environment variable ELASTICSEARCH_URL.");
+    }
     return;
 }
 
 Console.WriteLine("Indexing course offerings...");
+
+var settings = new ConnectionSettings(new Uri(ELASTICSEARCH_URL))
+    .DefaultIndex("offerings");
+var client = new ElasticClient(settings);
+
+// Ensure index exists with proper mappings
+var existsResponse = await client.IndexExistsAsync("offerings");
+if (!existsResponse.Exists)
+{
+    await client.CreateIndexAsync("offerings", c => c
+        .Mappings(m => m
+            .Map<SearchRecord>(mm => mm
+                .Properties(p => p
+                    .Keyword(k => k.Name(n => n.Id))
+                    .Keyword(k => k.Name(n => n.CourseCode))
+                    .Text(t => t.Name(n => n.CourseName))
+                    .Keyword(k => k.Name(n => n.Days))
+                    .Keyword(k => k.Name(n => n.Time))
+                    .Keyword(k => k.Name(n => n.Instructor))
+                    .Keyword(k => k.Name(n => n.Location))
+                )
+            )
+        )
+    );
+}
 
 var j = JinagaClient.Create(options =>
 {
@@ -31,8 +61,6 @@ var creator = await j.Fact(new User(ENVIRONMENT_PUBLIC_KEY));
 var university = await j.Fact(new Organization(creator, "6003"));
 var currentSemester = await j.Fact(new Semester(university, 2022, "Spring"));
 
-Dictionary<Guid, SearchRecord> index = new Dictionary<Guid, SearchRecord>();
-
 var offeringsToIndex = Given<Semester>.Match(semester =>
     from offering in semester.Successors().OfType<Offering>(offering => offering.semester)
     where offering.Successors().No<OfferingDelete>(deleted => deleted.offering)
@@ -40,10 +68,11 @@ var offeringsToIndex = Given<Semester>.Match(semester =>
     select offering);
 var indexInsertSubscription = j.Subscribe(offeringsToIndex, currentSemester, async offering =>
 {
-    // Create a record for the offering
+    // Create and index a record for the offering
     var recordId = Guid.NewGuid();
-    index[recordId] = new SearchRecord
+    var searchRecord = new SearchRecord
     {
+        Id = j.Hash(offering),
         CourseCode = offering.course.code,
         CourseName = offering.course.name,
         Days = "TBA",
@@ -51,8 +80,17 @@ var indexInsertSubscription = j.Subscribe(offeringsToIndex, currentSemester, asy
         Instructor = "TBA",
         Location = "TBA"
     };
-    await j.Fact(new SearchIndexRecord(offering, recordId));
-    Console.WriteLine($"Indexed {offering.course.code} {offering.course.name}");
+    
+    var response = await client.IndexDocumentAsync(searchRecord);
+    if (response.IsValid)
+    {
+        await j.Fact(new SearchIndexRecord(offering, recordId));
+        Console.WriteLine($"Indexed {offering.course.code} {offering.course.name}");
+    }
+    else
+    {
+        Console.WriteLine($"Failed to index {offering.course.code}: {response.DebugInformation}");
+    }
 });
 
 // Keep the application running
