@@ -69,10 +69,10 @@ var offeringsToIndex = Given<Semester>.Match(semester =>
 var indexInsertSubscription = j.Subscribe(offeringsToIndex, currentSemester, async offering =>
 {
     // Create and index a record for the offering
-    var recordId = Guid.NewGuid();
+    var recordId = j.Hash(offering);
     var searchRecord = new SearchRecord
     {
-        Id = j.Hash(offering),
+        Id = recordId,
         CourseCode = offering.course.code,
         CourseName = offering.course.name,
         Days = "TBA",
