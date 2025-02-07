@@ -1,5 +1,7 @@
 ﻿using Jinaga;
 using University.Model;
+using CsvHelper;
+using System.Globalization;
 
 var REPLICATOR_URL = Environment.GetEnvironmentVariable("REPLICATOR_URL");
 var ENVIRONMENT_PUBLIC_KEY = Environment.GetEnvironmentVariable("ENVIRONMENT_PUBLIC_KEY");
@@ -74,4 +76,69 @@ for (int i = 0; i < 100; i++)
     await j.Fact(new OfferingTime(offering, days, time, new OfferingTime[0]));
     await j.Fact(new OfferingInstructor(offering, instructor, new OfferingInstructor[0]));
     offerings.Add(offering);
+}
+
+var watcher = new FileSystemWatcher
+{
+    Path = "path/to/watch",
+    Filter = "*.csv",
+    NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
+};
+
+watcher.Created += OnNewFile;
+watcher.EnableRaisingEvents = true;
+
+void OnNewFile(object source, FileSystemEventArgs e)
+{
+    ImportCsvFile(e.FullPath);
+}
+
+void ImportCsvFile(string filePath)
+{
+    try
+    {
+        using var reader = new StreamReader(filePath);
+        using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+        var records = csv.GetRecords<CourseRecord>().ToList();
+
+        foreach (var record in records)
+        {
+            CreateFacts(record);
+        }
+
+        MoveFileToProcessed(filePath);
+    }
+    catch (Exception ex)
+    {
+        LogError(ex, filePath);
+        MoveFileToError(filePath);
+    }
+}
+
+async void CreateFacts(CourseRecord record)
+{
+    var course = await j.Fact(new Course(university, record.CourseCode, record.CourseName));
+    var semester = await j.Fact(new Semester(university, record.Year, record.Term));
+    var instructor = await j.Fact(new Instructor(university, record.Instructor));
+    var offering = await j.Fact(new Offering(course, semester, Guid.NewGuid()));
+    await j.Fact(new OfferingLocation(offering, record.Building, record.Room, new OfferingLocation[0]));
+    await j.Fact(new OfferingTime(offering, record.Days, record.Time, new OfferingTime[0]));
+    await j.Fact(new OfferingInstructor(offering, instructor, new OfferingInstructor[0]));
+}
+
+void MoveFileToProcessed(string filePath)
+{
+    var processedPath = Path.Combine("path/to/processed", Path.GetFileName(filePath));
+    File.Move(filePath, processedPath);
+}
+
+void LogError(Exception ex, string filePath)
+{
+    // Log the error details
+}
+
+void MoveFileToError(string filePath)
+{
+    var errorPath = Path.Combine("path/to/error", Path.GetFileName(filePath));
+    File.Move(filePath, errorPath);
 }
