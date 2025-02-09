@@ -9,18 +9,24 @@ namespace University.Importer
     {
         private readonly JinagaClient _j;
         private readonly Organization _university;
+        private readonly string _importDataPath;
+        private readonly string _processedDataPath;
+        private readonly string _errorDataPath;
 
-        public CsvFileWatcher(JinagaClient j, Organization university)
+        public CsvFileWatcher(JinagaClient j, Organization university, string importDataPath, string processedDataPath, string errorDataPath)
         {
             _j = j;
             _university = university;
+            _importDataPath = importDataPath;
+            _processedDataPath = processedDataPath;
+            _errorDataPath = errorDataPath;
         }
 
-        public void StartWatching(string path)
+        public void StartWatching()
         {
             var watcher = new FileSystemWatcher
             {
-                Path = path,
+                Path = _importDataPath,
                 Filter = "*.csv",
                 NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
             };
@@ -69,18 +75,18 @@ namespace University.Importer
 
         private void MoveFileToProcessed(string filePath)
         {
-            var processedPath = Path.Combine("path/to/processed", Path.GetFileName(filePath));
+            var processedPath = Path.Combine(_processedDataPath, Path.GetFileName(filePath));
             File.Move(filePath, processedPath);
         }
 
         private void LogError(Exception ex, string filePath)
         {
-            // Log the error details
+            Console.WriteLine($"Error processing file {filePath}: {ex.Message}");
         }
 
         private void MoveFileToError(string filePath)
         {
-            var errorPath = Path.Combine("path/to/error", Path.GetFileName(filePath));
+            var errorPath = Path.Combine(_errorDataPath, Path.GetFileName(filePath));
             File.Move(filePath, errorPath);
         }
     }
