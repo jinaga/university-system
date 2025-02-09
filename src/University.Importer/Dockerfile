@@ -11,4 +11,7 @@ RUN dotnet publish "University.Importer.csproj" -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/runtime:9.0
 WORKDIR /app
 COPY --from=build /app/publish .
+ENV IMPORT_DATA_PATH=/data/import
+ENV PROCESSED_DATA_PATH=/data/processed
+ENV ERROR_DATA_PATH=/data/error
 ENTRYPOINT ["dotnet", "University.Importer.dll"]

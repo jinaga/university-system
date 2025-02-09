@@ -35,8 +35,15 @@ services:
     environment:
       - REPLICATOR_URL=http://back-end-replicator:8080/jinaga
       - ENVIRONMENT_PUBLIC_KEY=default-public-key
+      - IMPORT_DATA_PATH=/data/import
+      - PROCESSED_DATA_PATH=/data/processed
+      - ERROR_DATA_PATH=/data/error
     depends_on:
       - back-end-replicator
+    volumes:
+      - ./data/import:/data/import
+      - ./data/processed:/data/processed
+      - ./data/error:/data/error
 
   indexer:
     build:
