@@ -70,8 +70,13 @@ var indexInsertSubscription = j.Subscribe(offeringsToIndex, currentSemester, asy
 // Keep the application running
 Console.WriteLine("Press Ctrl+C to exit.");
 var exitEvent = new TaskCompletionSource<bool>();
+
 Console.CancelKeyPress += (sender, eventArgs) => {
     eventArgs.Cancel = true;
+    exitEvent.SetResult(true);
+};
+
+AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) => {
     exitEvent.SetResult(true);
 };
 
