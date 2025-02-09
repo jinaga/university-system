@@ -13,6 +13,8 @@ namespace University.Importer
         private readonly string _processedDataPath;
         private readonly string _errorDataPath;
 
+        private FileSystemWatcher _watcher;
+
         public CsvFileWatcher(JinagaClient j, Organization university, string importDataPath, string processedDataPath, string errorDataPath)
         {
             _j = j;
@@ -24,15 +26,21 @@ namespace University.Importer
 
         public void StartWatching()
         {
-            var watcher = new FileSystemWatcher
+            _watcher = new FileSystemWatcher
             {
                 Path = _importDataPath,
                 Filter = "*.csv",
                 NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
             };
 
-            watcher.Created += OnNewFile;
-            watcher.EnableRaisingEvents = true;
+            _watcher.Created += OnNewFile;
+            _watcher.EnableRaisingEvents = true;
+        }
+
+        public void StopWatching()
+        {
+            _watcher.EnableRaisingEvents = false;
+            _watcher.Dispose();
         }
 
         private void OnNewFile(object source, FileSystemEventArgs e)

@@ -39,3 +39,15 @@ var university = await UniversityDataSeeder.SeedData(j, ENVIRONMENT_PUBLIC_KEY);
 
 var watcher = new CsvFileWatcher(j, university, IMPORT_DATA_PATH, PROCESSED_DATA_PATH, ERROR_DATA_PATH);
 watcher.StartWatching();
+
+Console.WriteLine("Press Ctrl+C to exit.");
+var exitEvent = new TaskCompletionSource<bool>();
+Console.CancelKeyPress += (sender, eventArgs) => {
+    eventArgs.Cancel = true;
+    exitEvent.SetResult(true);
+};
+
+await exitEvent.Task;
+
+watcher.StopWatching();
+await j.DisposeAsync();
