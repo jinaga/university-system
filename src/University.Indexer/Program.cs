@@ -2,7 +2,6 @@
 using Jinaga.Extensions;
 using University.Indexer;
 using University.Model;
-using Nest;
 
 var REPLICATOR_URL = Environment.GetEnvironmentVariable("REPLICATOR_URL");
 var ENVIRONMENT_PUBLIC_KEY = Environment.GetEnvironmentVariable("ENVIRONMENT_PUBLIC_KEY");
@@ -69,21 +68,15 @@ var indexInsertSubscription = j.Subscribe(offeringsToIndex, currentSemester, asy
 });
 
 // Keep the application running
-var cts = new CancellationTokenSource();
-Console.CancelKeyPress += (sender, e) =>
-{
-    e.Cancel = true;
-    cts.Cancel();
+Console.WriteLine("Press Ctrl+C to exit.");
+var exitEvent = new TaskCompletionSource<bool>();
+Console.CancelKeyPress += (sender, eventArgs) => {
+    eventArgs.Cancel = true;
+    exitEvent.SetResult(true);
 };
 
-try
-{
-    await Task.Delay(Timeout.Infinite, cts.Token);
-}
-catch (TaskCanceledException)
-{
-    // Task was canceled, exit gracefully
-}
+await exitEvent.Task;
 
 indexInsertSubscription.Stop();
+await j.DisposeAsync();
 Console.WriteLine("Stopped indexing course offerings.");
