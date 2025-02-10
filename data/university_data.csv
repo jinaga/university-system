@@ -1,101 +1,101 @@
-CourseCode,CourseName,Year,Term,Instructor,Building,Room,Days,Time
-CS 101,Introduction to Computer Science,2022,Summer,Dr. Patel,Building A,101,TTr,10:00
-CS 601,Quantum Computing,2022,Fall,Dr. Kim,Building A,102,MF,10:00
-CS 201,Data Structures and Algorithms,2023,Fall,Dr. Kim,Building C,101,MW,13:00
-CS 401,Artificial Intelligence,2022,Summer,Dr. Smith,Building D,103,WF,14:00
-CS 101,Introduction to Computer Science,2023,Spring,Dr. Jones,Building B,104,WF,14:00
-CS 401,Artificial Intelligence,2022,Summer,Dr. Smith,Building C,101,TTr,16:00
-CS 601,Quantum Computing,2022,Fall,Dr. Smith,Building C,104,MW,14:00
-CS 501,Machine Learning,2022,Spring,Dr. Lee,Building C,102,MF,17:00
-CS 101,Introduction to Computer Science,2023,Spring,Dr. Kim,Building B,104,MW,11:00
-CS 601,Quantum Computing,2022,Fall,Dr. Jones,Building C,103,MW,16:00
-CS 501,Machine Learning,2022,Fall,Dr. Jones,Building A,104,MW,18:00
-CS 501,Machine Learning,2022,Spring,Dr. Smith,Building C,102,MF,11:00
-CS 301,Software Engineering,2023,Summer,Dr. Kim,Building B,103,WF,17:00
-CS 401,Artificial Intelligence,2023,Spring,Dr. Patel,Building B,104,TTr,12:00
-CS 101,Introduction to Computer Science,2023,Fall,Dr. Singh,Building B,101,WF,8:00
-CS 401,Artificial Intelligence,2022,Spring,Dr. Lee,Building C,101,WF,15:00
-CS 401,Artificial Intelligence,2022,Fall,Dr. Kim,Building B,102,WF,15:00
-CS 401,Artificial Intelligence,2023,Summer,Dr. Singh,Building A,101,WF,11:00
-CS 601,Quantum Computing,2023,Spring,Dr. Jones,Building D,104,MW,16:00
-CS 101,Introduction to Computer Science,2022,Summer,Dr. Jones,Building B,104,TTr,13:00
-CS 501,Machine Learning,2022,Spring,Dr. Singh,Building B,104,MF,15:00
-CS 201,Data Structures and Algorithms,2022,Spring,Dr. Kim,Building C,102,MW,18:00
-CS 201,Data Structures and Algorithms,2022,Spring,Dr. Singh,Building D,104,MW,10:00
-CS 301,Software Engineering,2022,Summer,Dr. Jones,Building B,102,WF,19:00
-CS 201,Data Structures and Algorithms,2022,Fall,Dr. Patel,Building C,104,MF,19:00
-CS 401,Artificial Intelligence,2023,Fall,Dr. Patel,Building B,103,MW,17:00
-CS 301,Software Engineering,2023,Summer,Dr. Patel,Building B,104,WF,9:00
-CS 101,Introduction to Computer Science,2022,Summer,Dr. Kim,Building A,102,MF,14:00
-CS 601,Quantum Computing,2023,Spring,Dr. Jones,Building B,104,MW,18:00
-CS 501,Machine Learning,2023,Summer,Dr. Kim,Building C,103,WF,8:00
-CS 201,Data Structures and Algorithms,2022,Summer,Dr. Smith,Building A,104,TTr,14:00
-CS 301,Software Engineering,2023,Spring,Dr. Smith,Building C,101,WF,9:00
-CS 101,Introduction to Computer Science,2022,Spring,Dr. Singh,Building C,103,TTr,14:00
-CS 201,Data Structures and Algorithms,2022,Fall,Dr. Singh,Building C,103,WF,17:00
-CS 601,Quantum Computing,2022,Summer,Dr. Singh,Building B,104,MF,17:00
-CS 101,Introduction to Computer Science,2022,Fall,Dr. Patel,Building B,102,MF,18:00
-CS 101,Introduction to Computer Science,2022,Spring,Dr. Singh,Building D,103,MW,19:00
-CS 501,Machine Learning,2023,Spring,Dr. Kim,Building D,104,MW,8:00
-CS 501,Machine Learning,2022,Spring,Dr. Kim,Building B,102,WF,13:00
-CS 201,Data Structures and Algorithms,2022,Summer,Dr. Patel,Building B,104,TTr,10:00
-CS 501,Machine Learning,2022,Summer,Dr. Lee,Building B,101,MW,11:00
-CS 301,Software Engineering,2022,Spring,Dr. Smith,Building A,101,WF,18:00
-CS 401,Artificial Intelligence,2022,Fall,Dr. Lee,Building D,102,MW,13:00
-CS 201,Data Structures and Algorithms,2022,Spring,Dr. Jones,Building D,104,TTr,8:00
-CS 501,Machine Learning,2022,Spring,Dr. Lee,Building C,101,MW,12:00
-CS 201,Data Structures and Algorithms,2022,Spring,Dr. Singh,Building D,102,WF,14:00
-CS 101,Introduction to Computer Science,2022,Fall,Dr. Singh,Building A,103,MW,11:00
-CS 601,Quantum Computing,2022,Summer,Dr. Kim,Building C,102,MW,14:00
-CS 101,Introduction to Computer Science,2022,Summer,Dr. Smith,Building B,103,MF,12:00
-CS 601,Quantum Computing,2023,Summer,Dr. Smith,Building A,102,TTr,11:00
-CS 201,Data Structures and Algorithms,2022,Fall,Dr. Singh,Building A,102,WF,8:00
-CS 501,Machine Learning,2022,Fall,Dr. Singh,Building A,104,WF,16:00
-CS 601,Quantum Computing,2023,Summer,Dr. Smith,Building C,101,WF,9:00
-CS 601,Quantum Computing,2023,Fall,Dr. Kim,Building C,101,MF,12:00
-CS 401,Artificial Intelligence,2023,Summer,Dr. Smith,Building B,103,WF,8:00
-CS 501,Machine Learning,2023,Summer,Dr. Patel,Building A,102,MW,14:00
-CS 601,Quantum Computing,2022,Summer,Dr. Lee,Building D,101,MW,12:00
-CS 101,Introduction to Computer Science,2022,Spring,Dr. Kim,Building A,102,MF,14:00
-CS 401,Artificial Intelligence,2022,Fall,Dr. Patel,Building B,101,MW,12:00
-CS 401,Artificial Intelligence,2023,Fall,Dr. Singh,Building A,101,MW,17:00
-CS 101,Introduction to Computer Science,2022,Summer,Dr. Jones,Building D,101,MW,15:00
-CS 401,Artificial Intelligence,2022,Spring,Dr. Kim,Building D,103,WF,18:00
-CS 401,Artificial Intelligence,2022,Fall,Dr. Patel,Building B,101,MW,10:00
-CS 201,Data Structures and Algorithms,2022,Spring,Dr. Patel,Building B,101,MF,16:00
-CS 301,Software Engineering,2023,Spring,Dr. Singh,Building A,104,MW,17:00
-CS 601,Quantum Computing,2022,Fall,Dr. Kim,Building B,104,WF,12:00
-CS 301,Software Engineering,2022,Spring,Dr. Patel,Building B,101,TTr,12:00
-CS 301,Software Engineering,2022,Spring,Dr. Smith,Building D,104,MW,15:00
-CS 101,Introduction to Computer Science,2022,Fall,Dr. Lee,Building D,102,WF,13:00
-CS 301,Software Engineering,2023,Summer,Dr. Lee,Building C,103,MF,17:00
-CS 101,Introduction to Computer Science,2022,Spring,Dr. Kim,Building A,104,WF,9:00
-CS 101,Introduction to Computer Science,2022,Spring,Dr. Patel,Building A,104,TTr,18:00
-CS 401,Artificial Intelligence,2023,Summer,Dr. Smith,Building A,104,MF,9:00
-CS 601,Quantum Computing,2022,Summer,Dr. Singh,Building C,101,WF,12:00
-CS 301,Software Engineering,2022,Summer,Dr. Lee,Building B,102,MW,16:00
-CS 101,Introduction to Computer Science,2023,Spring,Dr. Patel,Building D,104,TTr,17:00
-CS 301,Software Engineering,2023,Summer,Dr. Kim,Building B,104,MW,15:00
-CS 601,Quantum Computing,2022,Fall,Dr. Singh,Building C,101,MW,14:00
-CS 601,Quantum Computing,2023,Summer,Dr. Singh,Building D,103,WF,13:00
-CS 501,Machine Learning,2022,Fall,Dr. Patel,Building B,102,MF,17:00
-CS 201,Data Structures and Algorithms,2022,Summer,Dr. Patel,Building D,102,TTr,9:00
-CS 401,Artificial Intelligence,2022,Fall,Dr. Jones,Building A,103,WF,11:00
-CS 601,Quantum Computing,2022,Fall,Dr. Singh,Building A,101,MF,16:00
-CS 501,Machine Learning,2023,Summer,Dr. Patel,Building B,103,TTr,9:00
-CS 201,Data Structures and Algorithms,2023,Summer,Dr. Lee,Building B,103,WF,19:00
-CS 101,Introduction to Computer Science,2022,Summer,Dr. Lee,Building C,102,TTr,17:00
-CS 301,Software Engineering,2023,Spring,Dr. Singh,Building A,104,MF,16:00
-CS 601,Quantum Computing,2023,Fall,Dr. Smith,Building B,102,MF,10:00
-CS 301,Software Engineering,2023,Fall,Dr. Smith,Building D,101,MF,15:00
-CS 401,Artificial Intelligence,2023,Fall,Dr. Singh,Building D,103,TTr,17:00
-CS 201,Data Structures and Algorithms,2022,Fall,Dr. Patel,Building D,102,WF,13:00
-CS 101,Introduction to Computer Science,2023,Summer,Dr. Jones,Building C,102,TTr,9:00
-CS 601,Quantum Computing,2022,Fall,Dr. Singh,Building A,103,MW,8:00
-CS 201,Data Structures and Algorithms,2022,Fall,Dr. Lee,Building A,104,MF,18:00
-CS 501,Machine Learning,2022,Spring,Dr. Patel,Building A,104,WF,11:00
-CS 301,Software Engineering,2022,Summer,Dr. Smith,Building A,102,MW,14:00
-CS 201,Data Structures and Algorithms,2023,Summer,Dr. Patel,Building D,103,MW,9:00
-CS 301,Software Engineering,2022,Spring,Dr. Patel,Building A,104,MW,16:00
-CS 101,Introduction to Computer Science,2022,Fall,Dr. Patel,Building C,102,MW,15:00
-CS 401,Artificial Intelligence,2022,Fall,Dr. Lee,Building C,103,WF,15:00
+OfferingGuid,CourseCode,CourseName,Year,Term,Instructor,Building,Room,Days,Time
+73bbab54-4085-48fc-8cd5-e251b47e51ef,CS 101,Introduction to Computer Science,2022,Summer,Dr. Patel,Building A,101,TTr,10:00
+c2752cb8-c585-4b1f-9866-0dfa46a69a8c,CS 601,Quantum Computing,2022,Fall,Dr. Kim,Building A,102,MF,10:00
+ab8bf938-9a2e-4699-9b2b-90101fa043fb,CS 201,Data Structures and Algorithms,2023,Fall,Dr. Kim,Building C,101,MW,13:00
+57c1f92a-def0-4285-86cd-0eb744030bc3,CS 401,Artificial Intelligence,2022,Summer,Dr. Smith,Building D,103,WF,14:00
+aa587a7a-1723-4da4-a9d4-712561de9161,CS 101,Introduction to Computer Science,2023,Spring,Dr. Jones,Building B,104,WF,14:00
+beab041c-e3dc-4cf1-b93b-0d791a1a1105,CS 401,Artificial Intelligence,2022,Summer,Dr. Smith,Building C,101,TTr,16:00
+4dc0833d-8983-49c3-9522-b9e79a6384e5,CS 601,Quantum Computing,2022,Fall,Dr. Smith,Building C,104,MW,14:00
+39edc7e1-64a1-44d1-b051-90c4d6566b1f,CS 501,Machine Learning,2022,Spring,Dr. Lee,Building C,102,MF,17:00
+9118f8a9-c825-4932-a5be-e699ea7069f5,CS 101,Introduction to Computer Science,2023,Spring,Dr. Kim,Building B,104,MW,11:00
+a4370ae3-b0a3-41c0-89d8-0e92d566be3d,CS 601,Quantum Computing,2022,Fall,Dr. Jones,Building C,103,MW,16:00
+2b6cd962-a2ee-4bf9-9f52-0fbf634856c7,CS 501,Machine Learning,2022,Fall,Dr. Jones,Building A,104,MW,18:00
+c3c080de-4e98-4016-8db0-54d217f3b549,CS 501,Machine Learning,2022,Spring,Dr. Smith,Building C,102,MF,11:00
+d86c13b8-221b-418e-8a27-bb019c18d4b8,CS 301,Software Engineering,2023,Summer,Dr. Kim,Building B,103,WF,17:00
+0e8a68ad-ceb8-4473-8031-c530231e9091,CS 401,Artificial Intelligence,2023,Spring,Dr. Patel,Building B,104,TTr,12:00
+3b1e47e1-0c33-4ed7-a5df-a69c0c0a3466,CS 101,Introduction to Computer Science,2023,Fall,Dr. Singh,Building B,101,WF,8:00
+3341f4c6-78c9-409c-9235-d5546c7892c7,CS 401,Artificial Intelligence,2022,Spring,Dr. Lee,Building C,101,WF,15:00
+9991dbe0-48a8-436d-a246-db661fb1f15b,CS 401,Artificial Intelligence,2022,Fall,Dr. Kim,Building B,102,WF,15:00
+29c62928-0aa0-48ff-b8d6-4bbeb683e1e6,CS 401,Artificial Intelligence,2023,Summer,Dr. Singh,Building A,101,WF,11:00
+9546fc66-f5c0-460d-a067-12bed1ebc79f,CS 601,Quantum Computing,2023,Spring,Dr. Jones,Building D,104,MW,16:00
+f01fc256-3509-4ffd-9092-12aa0a8ee627,CS 101,Introduction to Computer Science,2022,Summer,Dr. Jones,Building B,104,TTr,13:00
+45b3a847-1108-495e-b211-8171ca184e76,CS 501,Machine Learning,2022,Spring,Dr. Singh,Building B,104,MF,15:00
+cc93074c-17af-47a5-a6a3-e8a591d1326e,CS 201,Data Structures and Algorithms,2022,Spring,Dr. Kim,Building C,102,MW,18:00
+3811ec83-4e01-42d8-9303-288ba01e5ad8,CS 201,Data Structures and Algorithms,2022,Spring,Dr. Singh,Building D,104,MW,10:00
+5fe301fc-5b21-4fc1-a36a-67431ec6a19b,CS 301,Software Engineering,2022,Summer,Dr. Jones,Building B,102,WF,19:00
+d3d00c6b-9e7d-4277-8510-5220618f03bf,CS 201,Data Structures and Algorithms,2022,Fall,Dr. Patel,Building C,104,MF,19:00
+ec482eba-3859-4c21-a720-1a95dcfdc911,CS 401,Artificial Intelligence,2023,Fall,Dr. Patel,Building B,103,MW,17:00
+a8d83c1a-716b-4e2e-bab1-36ffc4e24388,CS 301,Software Engineering,2023,Summer,Dr. Patel,Building B,104,WF,9:00
+81cda67b-ccd1-4f65-94d6-2e6b54872893,CS 101,Introduction to Computer Science,2022,Summer,Dr. Kim,Building A,102,MF,14:00
+acc6b774-a28f-4abe-95af-e80d31ad4cce,CS 601,Quantum Computing,2023,Spring,Dr. Jones,Building B,104,MW,18:00
+4c8331b5-3784-41d5-8b7b-4fb46155f1b6,CS 501,Machine Learning,2023,Summer,Dr. Kim,Building C,103,WF,8:00
+dbf459d6-962a-4797-89b8-2dc1062969f8,CS 201,Data Structures and Algorithms,2022,Summer,Dr. Smith,Building A,104,TTr,14:00
+9ea5e1fa-a40e-4214-8448-aa63d8a582d2,CS 301,Software Engineering,2023,Spring,Dr. Smith,Building C,101,WF,9:00
+e25f9c9a-4a0a-41c7-892d-3c7a4cb09d24,CS 101,Introduction to Computer Science,2022,Spring,Dr. Singh,Building C,103,TTr,14:00
+d577ea5c-191a-4adc-99ff-8b0b8b6ca010,CS 201,Data Structures and Algorithms,2022,Fall,Dr. Singh,Building C,103,WF,17:00
+a38806b0-3f02-4f88-9433-14c71f50b29b,CS 601,Quantum Computing,2022,Summer,Dr. Singh,Building B,104,MF,17:00
+8304e1a5-f7c8-488b-b7cd-b942efc813b3,CS 101,Introduction to Computer Science,2022,Fall,Dr. Patel,Building B,102,MF,18:00
+caf4501b-60df-47a9-9b0d-8553640e4b6c,CS 101,Introduction to Computer Science,2022,Spring,Dr. Singh,Building D,103,MW,19:00
+cc30b1a8-1281-4e9a-aed1-a1b76a5933c4,CS 501,Machine Learning,2023,Spring,Dr. Kim,Building D,104,MW,8:00
+21f75409-9c17-43da-af12-fced0b16227e,CS 501,Machine Learning,2022,Spring,Dr. Kim,Building B,102,WF,13:00
+ba25615a-8967-48a1-8d13-5cd07f99de25,CS 201,Data Structures and Algorithms,2022,Summer,Dr. Patel,Building B,104,TTr,10:00
+cc084d54-2359-4766-991c-2cea15586e32,CS 501,Machine Learning,2022,Summer,Dr. Lee,Building B,101,MW,11:00
+dfbe2514-49d5-4ade-b4d9-2f3c47ce767c,CS 301,Software Engineering,2022,Spring,Dr. Smith,Building A,101,WF,18:00
+eeb2b934-7511-4986-89be-3e1ccc0f5f3c,CS 401,Artificial Intelligence,2022,Fall,Dr. Lee,Building D,102,MW,13:00
+26147215-5622-4a85-99f2-3adcee12e7c5,CS 201,Data Structures and Algorithms,2022,Spring,Dr. Jones,Building D,104,TTr,8:00
+cbcbb6fc-7808-4271-b134-f6418f0697e6,CS 501,Machine Learning,2022,Spring,Dr. Lee,Building C,101,MW,12:00
+9be05b5f-05f8-41cd-a202-a2ff97ed1824,CS 201,Data Structures and Algorithms,2022,Spring,Dr. Singh,Building D,102,WF,14:00
+60eae74b-bfbf-4c38-bb05-4e4fbd962ea0,CS 101,Introduction to Computer Science,2022,Fall,Dr. Singh,Building A,103,MW,11:00
+f72d5726-640f-4710-9fca-696688e4c5de,CS 601,Quantum Computing,2022,Summer,Dr. Kim,Building C,102,MW,14:00
+b4be19b0-21a0-4162-ae9e-e30c5d85dd71,CS 101,Introduction to Computer Science,2022,Summer,Dr. Smith,Building B,103,MF,12:00
+9e5415ab-b634-48f1-9297-4b3c487046da,CS 601,Quantum Computing,2023,Summer,Dr. Smith,Building A,102,TTr,11:00
+078daab3-4287-4b07-9bb8-23ddce0ee997,CS 201,Data Structures and Algorithms,2022,Fall,Dr. Singh,Building A,102,WF,8:00
+d6c81fe5-abd5-4009-9a83-09c02a35d595,CS 501,Machine Learning,2022,Fall,Dr. Singh,Building A,104,WF,16:00
+bd6e3dc7-8dbb-4be2-a92a-ce4e399e598a,CS 601,Quantum Computing,2023,Summer,Dr. Smith,Building C,101,WF,9:00
+7882261e-1a90-4247-ab63-1b434a50515f,CS 601,Quantum Computing,2023,Fall,Dr. Kim,Building C,101,MF,12:00
+bf3e4e55-1026-4a8e-92d9-f361b6e2438c,CS 401,Artificial Intelligence,2023,Summer,Dr. Smith,Building B,103,WF,8:00
+811805a9-370d-46eb-8c35-1e2efd526262,CS 501,Machine Learning,2023,Summer,Dr. Patel,Building A,102,MW,14:00
+9b21f184-9e45-4a3b-9297-ac39288503c1,CS 601,Quantum Computing,2022,Summer,Dr. Lee,Building D,101,MW,12:00
+29d6f0e6-60f8-4e91-aa52-710e47e4d436,CS 101,Introduction to Computer Science,2022,Spring,Dr. Kim,Building A,102,MF,14:00
+03af15f4-f852-42bf-8b4e-cf9a5fdb2d9f,CS 401,Artificial Intelligence,2022,Fall,Dr. Patel,Building B,101,MW,12:00
+87659705-6254-4fac-80eb-e403fe397ad9,CS 401,Artificial Intelligence,2023,Fall,Dr. Singh,Building A,101,MW,17:00
+68a2c45c-ea59-4d85-be44-5b1ebd6ed674,CS 101,Introduction to Computer Science,2022,Summer,Dr. Jones,Building D,101,MW,15:00
+f708df03-a339-4641-a687-ae43300bf1c7,CS 401,Artificial Intelligence,2022,Spring,Dr. Kim,Building D,103,WF,18:00
+a54c5627-7beb-40f7-96a4-a682f98755d2,CS 401,Artificial Intelligence,2022,Fall,Dr. Patel,Building B,101,MW,10:00
+b126e3cb-6505-451f-b27a-f03f7ed8110b,CS 201,Data Structures and Algorithms,2022,Spring,Dr. Patel,Building B,101,MF,16:00
+25f61e6e-52c7-4589-9820-6732dfb3bf88,CS 301,Software Engineering,2023,Spring,Dr. Singh,Building A,104,MW,17:00
+7b67df3f-6895-41dc-b558-69fb027f46af,CS 601,Quantum Computing,2022,Fall,Dr. Kim,Building B,104,WF,12:00
+de1fff05-07db-4be3-9503-ef375a307759,CS 301,Software Engineering,2022,Spring,Dr. Patel,Building B,101,TTr,12:00
+c3c8272c-cb46-4a68-9e40-a2956e2b4881,CS 301,Software Engineering,2022,Spring,Dr. Smith,Building D,104,MW,15:00
+e54468e7-4f78-4f0d-89d8-f6ac5a94d751,CS 101,Introduction to Computer Science,2022,Fall,Dr. Lee,Building D,102,WF,13:00
+8051f1fd-cf5d-483a-8e08-ce108582fbcc,CS 301,Software Engineering,2023,Summer,Dr. Lee,Building C,103,MF,17:00
+e284a5ad-959a-421b-bed1-e432340e6cd5,CS 101,Introduction to Computer Science,2022,Spring,Dr. Kim,Building A,104,WF,9:00
+c976c02b-89ac-41f7-9f37-0b9fefca4dd2,CS 101,Introduction to Computer Science,2022,Spring,Dr. Patel,Building A,104,TTr,18:00
+fa4d72f3-587c-4d29-a364-db45ddf3693b,CS 401,Artificial Intelligence,2023,Summer,Dr. Smith,Building A,104,MF,9:00
+c391abef-6949-42e8-acdb-9aef89f54cf1,CS 601,Quantum Computing,2022,Summer,Dr. Singh,Building C,101,WF,12:00
+3526b112-92ef-4eee-89c6-8278a4d990ed,CS 301,Software Engineering,2022,Summer,Dr. Lee,Building B,102,MW,16:00
+5d7b5036-c721-4a8e-89cb-c9eeb3c9152a,CS 101,Introduction to Computer Science,2023,Spring,Dr. Patel,Building D,104,TTr,17:00
+c30a17cf-dcbc-46f5-918d-9a0d617a2b1f,CS 301,Software Engineering,2023,Summer,Dr. Kim,Building B,104,MW,15:00
+06ec98a8-9ed9-4324-b975-0d656809fee2,CS 601,Quantum Computing,2022,Fall,Dr. Singh,Building C,101,MW,14:00
+81f6dd52-ce7e-4dee-85ea-c33acba155bb,CS 601,Quantum Computing,2023,Summer,Dr. Singh,Building D,103,WF,13:00
+3a982a5b-0392-4a35-8690-a97d68748759,CS 501,Machine Learning,2022,Fall,Dr. Patel,Building B,102,MF,17:00
+6ea22154-99e0-444a-89bd-71ec4121c14b,CS 201,Data Structures and Algorithms,2022,Summer,Dr. Patel,Building D,102,TTr,9:00
+c11da295-6f9e-4ea9-aa10-ddaeb56e7530,CS 401,Artificial Intelligence,2022,Fall,Dr. Jones,Building A,103,WF,11:00
+a3654efb-d9ba-4216-b43d-343687991e75,CS 601,Quantum Computing,2022,Fall,Dr. Singh,Building A,101,MF,16:00
+a496b795-c6f9-49ee-ad73-8c316f434238,CS 501,Machine Learning,2023,Summer,Dr. Patel,Building B,103,TTr,9:00
+cc014457-eaaf-4afc-946c-6147af433307,CS 201,Data Structures and Algorithms,2023,Summer,Dr. Lee,Building B,103,WF,19:00
+76640115-4e7d-4384-8b6a-45716148b08f,CS 101,Introduction to Computer Science,2022,Summer,Dr. Lee,Building C,102,TTr,17:00
+d50580fe-669b-46c3-992a-c96b28e74788,CS 301,Software Engineering,2023,Spring,Dr. Singh,Building A,104,MF,16:00
+e3f47bd4-3e22-42c9-b32d-529e08e25650,CS 601,Quantum Computing,2023,Fall,Dr. Smith,Building B,102,MF,10:00
+6ae568a9-8c61-42ec-bfa6-1f3f4a5d4fac,CS 301,Software Engineering,2023,Fall,Dr. Smith,Building D,101,MF,15:00
+f8d3344e-619b-4b53-baae-8e099cfc9a0e,CS 401,Artificial Intelligence,2023,Fall,Dr. Singh,Building D,103,TTr,17:00
+fca1ca7d-8147-43e8-bcf0-3909153f69ab,CS 201,Data Structures and Algorithms,2022,Fall,Dr. Patel,Building D,102,WF,13:00
+e719e8d2-cd84-4ee7-a67f-8e155e6f22f7,CS 101,Introduction to Computer Science,2023,Summer,Dr. Jones,Building C,102,TTr,9:00
+273aa87a-5c5d-49d4-aae4-c0d860b9d032,CS 601,Quantum Computing,2022,Fall,Dr. Singh,Building A,103,MW,8:00
+5d61bbf8-318d-4cac-a72f-81b488a631f8,CS 201,Data Structures and Algorithms,2022,Fall,Dr. Lee,Building A,104,MF,18:00
+9532e4da-aa32-4e47-8c4d-89be357be8b0,CS 501,Machine Learning,2022,Spring,Dr. Patel,Building A,104,WF,11:00
+b2d7cd98-a590-46db-84ef-68aa36329be2,CS 301,Software Engineering,2022,Summer,Dr. Smith,Building A,102,MW,14:00
+1254a4f7-76c4-4f02-a322-fbb7fd1c10fb,CS 201,Data Structures and Algorithms,2023,Summer,Dr. Patel,Building D,103,MW,9:00
+eda85703-7e4d-46cf-bfa4-383a54282efb,CS 301,Software Engineering,2022,Spring,Dr. Patel,Building A,104,MW,16:00
+fe78ca21-c744-4ee8-8c54-4204afc9e9ec,CS 101,Introduction to Computer Science,2022,Fall,Dr. Patel,Building C,102,MW,15:00
+63439a77-dab1-4e46-a9d5-a67c2f11683b,CS 401,Artificial Intelligence,2022,Fall,Dr. Lee,Building C,103,WF,15:00

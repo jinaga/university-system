@@ -1,5 +1,6 @@
 public class CourseRecord
 {
+    public Guid OfferingGuid { get; set; }
     public string CourseCode { get; set; }
     public string CourseName { get; set; }
     public int Year { get; set; }
