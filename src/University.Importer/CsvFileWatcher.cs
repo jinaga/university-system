@@ -2,6 +2,7 @@ using Jinaga;
 using University.Model;
 using CsvHelper;
 using System.Globalization;
+using System.Threading.Tasks;
 
 namespace University.Importer
 {
@@ -13,7 +14,7 @@ namespace University.Importer
         private readonly string _processedDataPath;
         private readonly string _errorDataPath;
 
-        private FileSystemWatcher _watcher;
+        private FileSystemWatcher? _watcher = null;
 
         public CsvFileWatcher(JinagaClient j, Organization university, string importDataPath, string processedDataPath, string errorDataPath)
         {
@@ -26,6 +27,10 @@ namespace University.Importer
 
         public void StartWatching()
         {
+            if (_watcher != null)
+            {
+                return;
+            }
             _watcher = new FileSystemWatcher
             {
                 Path = _importDataPath,
@@ -39,26 +44,30 @@ namespace University.Importer
 
         public void StopWatching()
         {
+            if (_watcher == null)
+            {
+                return;
+            }
             _watcher.EnableRaisingEvents = false;
             _watcher.Dispose();
         }
 
         private void OnNewFile(object source, FileSystemEventArgs e)
         {
-            ImportCsvFile(e.FullPath);
+            Task.Run(async () => await ImportCsvFile(e.FullPath));
         }
 
-        private void ImportCsvFile(string filePath)
+        private async Task ImportCsvFile(string filePath)
         {
             try
             {
                 using var reader = new StreamReader(filePath);
                 using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
-                var records = csv.GetRecords<CourseRecord>().ToList();
+                var records = csv.GetRecordsAsync<CourseRecord>();
 
-                foreach (var record in records)
+                await foreach (var record in records)
                 {
-                    CreateFacts(record);
+                    await CreateFacts(record);
                 }
 
                 MoveFileToProcessed(filePath);
@@ -70,7 +79,7 @@ namespace University.Importer
             }
         }
 
-        private async void CreateFacts(CourseRecord record)
+        private async Task CreateFacts(CourseRecord record)
         {
             var course = await _j.Fact(new Course(_university, record.CourseCode, record.CourseName));
             var semester = await _j.Fact(new Semester(_university, record.Year, record.Term));
