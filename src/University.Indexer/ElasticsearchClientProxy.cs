@@ -1,4 +1,3 @@
-using System;
 using Nest;
 
 namespace University.Indexer

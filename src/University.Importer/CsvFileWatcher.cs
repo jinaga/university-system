@@ -2,7 +2,6 @@ using Jinaga;
 using University.Model;
 using CsvHelper;
 using System.Globalization;
-using System.Threading.Tasks;
 
 namespace University.Importer
 {
