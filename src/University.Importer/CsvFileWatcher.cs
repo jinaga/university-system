@@ -97,15 +97,15 @@ namespace University.Importer
             var locations = await _j.Query(locationsOfOffering, offering);
             var times = await _j.Query(timesOfOffering, offering);
             var instructors = await _j.Query(instructorsOfOffering, offering);
-            if (locations.Count() == 0)
+            if (locations.Count() != 1 || locations[0].building != record.Building || locations[0].room != record.Room)
             {
                 await _j.Fact(new OfferingLocation(offering, record.Building, record.Room, locations.AsEnumerable().ToArray()));
             }
-            if (times.Count() == 0)
+            if (times.Count() != 1 || times[0].days != record.Days || times[0].time != record.Time)
             {
                 await _j.Fact(new OfferingTime(offering, record.Days, record.Time, times.ToArray()));
             }
-            if (instructors.Count() == 0)
+            if (instructors.Count() != 1 || _j.Hash(instructors[0].instructor) != _j.Hash(instructor))
             {
                 await _j.Fact(new OfferingInstructor(offering, instructor, instructors.ToArray()));
             }
