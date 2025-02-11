@@ -1,7 +1,11 @@
-using Jinaga;
-using University.Model;
-using CsvHelper;
 using System.Globalization;
+
+using CsvHelper;
+
+using Jinaga;
+using Jinaga.Extensions;
+
+using University.Model;
 
 namespace University.Importer
 {
@@ -80,13 +84,33 @@ namespace University.Importer
 
         private async Task CreateFacts(CourseRecord record)
         {
+            var stateOfOffering = Given<Offering>.Match(offering => new
+            {
+                Locations = offering.Locations,
+                Times = offering.Times,
+                Instructors = offering.Successors().OfType<OfferingInstructor>(instructor => instructor.offering)
+                    .WhereNo((OfferingInstructor next) => next.prior)
+            });
+
             var course = await _j.Fact(new Course(_university, record.CourseCode, record.CourseName));
             var semester = await _j.Fact(new Semester(_university, record.Year, record.Term));
             var instructor = await _j.Fact(new Instructor(_university, record.Instructor));
             var offering = await _j.Fact(new Offering(course, semester, record.OfferingGuid));
-            await _j.Fact(new OfferingLocation(offering, record.Building, record.Room, new OfferingLocation[0]));
-            await _j.Fact(new OfferingTime(offering, record.Days, record.Time, new OfferingTime[0]));
-            await _j.Fact(new OfferingInstructor(offering, instructor, new OfferingInstructor[0]));
+
+            var currentStates = await _j.Query(stateOfOffering, offering);
+            var currentState = currentStates.Single();
+            if (currentState.Locations.Count() == 0)
+            {
+                await _j.Fact(new OfferingLocation(offering, record.Building, record.Room, currentState.Locations.ToArray()));
+            }
+            if (currentState.Times.Count() == 0)
+            {
+                await _j.Fact(new OfferingTime(offering, record.Days, record.Time, currentState.Times.ToArray()));
+            }
+            if (currentState.Instructors.Count() == 0)
+            {
+                await _j.Fact(new OfferingInstructor(offering, instructor, currentState.Instructors.ToArray()));
+            }
         }
 
         private void MoveFileToProcessed(string filePath)
