@@ -109,6 +109,8 @@ namespace University.Importer
             {
                 await _j.Fact(new OfferingInstructor(offering, instructor, instructors.ToArray()));
             }
+
+            Console.WriteLine($"Imported {record.CourseCode} {record.CourseName}");
         }
 
         private void MoveFileToProcessed(string filePath)
