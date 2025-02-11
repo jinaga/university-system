@@ -84,32 +84,30 @@ namespace University.Importer
 
         private async Task CreateFacts(CourseRecord record)
         {
-            var stateOfOffering = Given<Offering>.Match(offering => new
-            {
-                Locations = offering.Locations,
-                Times = offering.Times,
-                Instructors = offering.Successors().OfType<OfferingInstructor>(instructor => instructor.offering)
-                    .WhereNo((OfferingInstructor next) => next.prior)
-            });
+            var locationsOfOffering = Given<Offering>.Match(offering => offering.Locations.Select(location => location));
+            var timesOfOffering = Given<Offering>.Match(offering => offering.Times.Select(time => time));
+            var instructorsOfOffering = Given<Offering>.Match(offering => offering.Successors().OfType<OfferingInstructor>(instructor => instructor.offering)
+                .WhereNo((OfferingInstructor next) => next.prior));
 
             var course = await _j.Fact(new Course(_university, record.CourseCode, record.CourseName));
             var semester = await _j.Fact(new Semester(_university, record.Year, record.Term));
             var instructor = await _j.Fact(new Instructor(_university, record.Instructor));
             var offering = await _j.Fact(new Offering(course, semester, record.OfferingGuid));
 
-            var currentStates = await _j.Query(stateOfOffering, offering);
-            var currentState = currentStates.Single();
-            if (currentState.Locations.Count() == 0)
+            var locations = await _j.Query(locationsOfOffering, offering);
+            var times = await _j.Query(timesOfOffering, offering);
+            var instructors = await _j.Query(instructorsOfOffering, offering);
+            if (locations.Count() == 0)
             {
-                await _j.Fact(new OfferingLocation(offering, record.Building, record.Room, currentState.Locations.ToArray()));
+                await _j.Fact(new OfferingLocation(offering, record.Building, record.Room, locations.AsEnumerable().ToArray()));
             }
-            if (currentState.Times.Count() == 0)
+            if (times.Count() == 0)
             {
-                await _j.Fact(new OfferingTime(offering, record.Days, record.Time, currentState.Times.ToArray()));
+                await _j.Fact(new OfferingTime(offering, record.Days, record.Time, times.ToArray()));
             }
-            if (currentState.Instructors.Count() == 0)
+            if (instructors.Count() == 0)
             {
-                await _j.Fact(new OfferingInstructor(offering, instructor, currentState.Instructors.ToArray()));
+                await _j.Fact(new OfferingInstructor(offering, instructor, instructors.ToArray()));
             }
         }
 
