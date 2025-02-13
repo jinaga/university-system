@@ -2,12 +2,15 @@
 using Jinaga.Extensions;
 using University.Indexer;
 using University.Model;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
 
 var REPLICATOR_URL = Environment.GetEnvironmentVariable("REPLICATOR_URL");
 var ENVIRONMENT_PUBLIC_KEY = Environment.GetEnvironmentVariable("ENVIRONMENT_PUBLIC_KEY");
 var ELASTICSEARCH_URL = Environment.GetEnvironmentVariable("ELASTICSEARCH_URL");
+var OTEL_EXPORTER_OTLP_ENDPOINT = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT");
 
-if (REPLICATOR_URL == null || ENVIRONMENT_PUBLIC_KEY == null || ELASTICSEARCH_URL == null)
+if (REPLICATOR_URL == null || ENVIRONMENT_PUBLIC_KEY == null || ELASTICSEARCH_URL == null || OTEL_EXPORTER_OTLP_ENDPOINT == null)
 {
     if (REPLICATOR_URL == null)
     {
@@ -21,8 +24,18 @@ if (REPLICATOR_URL == null || ENVIRONMENT_PUBLIC_KEY == null || ELASTICSEARCH_UR
     {
         Console.WriteLine("Please set the environment variable ELASTICSEARCH_URL.");
     }
+    if (OTEL_EXPORTER_OTLP_ENDPOINT == null)
+    {
+        Console.WriteLine("Please set the environment variable OTEL_EXPORTER_OTLP_ENDPOINT.");
+    }
     return;
 }
+
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddSource("University.Indexer")
+    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("University.Indexer"))
+    .AddOtlpExporter(options => options.Endpoint = new Uri(OTEL_EXPORTER_OTLP_ENDPOINT))
+    .Build();
 
 Console.WriteLine("Indexing course offerings...");
 

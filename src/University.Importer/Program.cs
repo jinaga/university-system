@@ -1,12 +1,15 @@
 ﻿using University.Importer;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
 
 var REPLICATOR_URL = Environment.GetEnvironmentVariable("REPLICATOR_URL");
 var ENVIRONMENT_PUBLIC_KEY = Environment.GetEnvironmentVariable("ENVIRONMENT_PUBLIC_KEY");
 var IMPORT_DATA_PATH = Environment.GetEnvironmentVariable("IMPORT_DATA_PATH");
 var PROCESSED_DATA_PATH = Environment.GetEnvironmentVariable("PROCESSED_DATA_PATH");
 var ERROR_DATA_PATH = Environment.GetEnvironmentVariable("ERROR_DATA_PATH");
+var OTEL_EXPORTER_OTLP_ENDPOINT = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT");
 
-if (REPLICATOR_URL == null || ENVIRONMENT_PUBLIC_KEY == null || IMPORT_DATA_PATH == null || PROCESSED_DATA_PATH == null || ERROR_DATA_PATH == null)
+if (REPLICATOR_URL == null || ENVIRONMENT_PUBLIC_KEY == null || IMPORT_DATA_PATH == null || PROCESSED_DATA_PATH == null || ERROR_DATA_PATH == null || OTEL_EXPORTER_OTLP_ENDPOINT == null)
 {
     if (REPLICATOR_URL == null)
     {
@@ -28,8 +31,18 @@ if (REPLICATOR_URL == null || ENVIRONMENT_PUBLIC_KEY == null || IMPORT_DATA_PATH
     {
         Console.WriteLine("Please set the environment variable ERROR_DATA_PATH.");
     }
+    if (OTEL_EXPORTER_OTLP_ENDPOINT == null)
+    {
+        Console.WriteLine("Please set the environment variable OTEL_EXPORTER_OTLP_ENDPOINT.");
+    }
     return;
 }
+
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddSource("University.Importer")
+    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("University.Importer"))
+    .AddOtlpExporter(options => options.Endpoint = new Uri(OTEL_EXPORTER_OTLP_ENDPOINT))
+    .Build();
 
 var j = JinagaClientFactory.CreateClient(REPLICATOR_URL);
 

@@ -38,8 +38,10 @@ services:
       - IMPORT_DATA_PATH=/data/import
       - PROCESSED_DATA_PATH=/data/processed
       - ERROR_DATA_PATH=/data/error
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
     depends_on:
       - back-end-replicator
+      - otel-collector
     volumes:
       - ./data/import:/data/import
       - ./data/processed:/data/processed
@@ -53,9 +55,28 @@ services:
       - REPLICATOR_URL=http://back-end-replicator:8080/jinaga
       - ENVIRONMENT_PUBLIC_KEY=default-public-key
       - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
     depends_on:
       - back-end-replicator
       - elasticsearch
+      - otel-collector
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    ports:
+      - "6831:6831/udp"
+      - "16686:16686"
+
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    container_name: otel-collector
+    ports:
+      - "4317:4317"
+      - "55680:55680"
+    volumes:
+      - ./otel-collector-config.yml:/otel-collector-config.yml
+    command: ["--config=/otel-collector-config.yml"]
 
 volumes:
   esdata:

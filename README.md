@@ -59,3 +59,67 @@ The University.Importer service uses the following environment variables:
 - `ENVIRONMENT_PUBLIC_KEY`: Public key for the environment (default: default-public-key)
 
 You can override these in the docker-compose.yml file or by setting them in your environment before running docker compose.
+
+## Telemetry and tracing
+
+This project uses OpenTelemetry for collecting telemetry data and Jaeger for visualizing traces. This helps in monitoring and debugging the system by providing insights into the application's performance and behavior.
+
+### Configuring OpenTelemetry collector
+
+1. Create a configuration file for the OpenTelemetry Collector named `otel-collector-config.yml` in the `mesh` directory. The file should define the receivers, processors, and exporters for the collector. Here is an example configuration:
+
+    ```yaml
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+          http:
+
+    exporters:
+      logging:
+        loglevel: debug
+      jaeger:
+        endpoint: "http://jaeger:14250"
+        tls:
+          insecure: true
+
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: []
+          exporters: [logging, jaeger]
+    ```
+
+2. In the `docker-compose.yml` file located in the `mesh` directory, add the OpenTelemetry Collector service. This service should use the `otel/opentelemetry-collector:latest` image and mount the configuration file created in the previous step.
+
+### Starting the services
+
+1. Navigate to the `mesh` directory:
+    ```bash
+    cd mesh
+    ```
+
+2. Pull the latest images (optional but recommended):
+    ```bash
+    docker compose pull
+    ```
+
+3. Build the services:
+    ```bash
+    docker compose build
+    ```
+
+4. Start the services:
+    ```bash
+    docker compose up --build
+    ```
+
+This will start all services, including the OpenTelemetry Collector and Jaeger.
+
+### Viewing traces in Jaeger
+
+1. Open a web browser and navigate to `http://localhost:16686`.
+2. Use the Jaeger UI to search for and view traces collected by the OpenTelemetry Collector.
+
+By following these steps, new developers will be able to configure and use Jaeger and OpenTelemetry for tracing and monitoring the system.
