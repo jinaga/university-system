@@ -65,7 +65,7 @@ namespace University.Indexer
         {
             var success = await ExecuteWithRetry(async () =>
             {
-                IIndexResponse indexResponse = await client.IndexDocumentAsync(searchRecord);
+                IIndexResponse indexResponse = await client.IndexAsync(searchRecord, i => i.Id(searchRecord.Id));
                 return indexResponse.IsValid;
             });
             if (!success)
