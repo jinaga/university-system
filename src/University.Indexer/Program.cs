@@ -68,13 +68,8 @@ await consoleApp.RunAsync(async () =>
         select offering);
     var indexInsertSubscription = j.Subscribe(offeringsToIndex, currentSemester, async offering =>
     {
-        // Start a new activity for each offering
-        using var activity = activitySource.StartActivity("IndexOffering");
-        activity?.SetTag("courseCode", offering.course.code);
-        activity?.SetTag("courseName", offering.course.name);
-
         // Create and index a record for the offering
-        var recordId = j.Hash(offering);
+        var recordId = j.Hash(offering).Replace('+', '-').Replace('/', '_').TrimEnd('=');
         var searchRecord = new SearchRecord
         {
             Id = recordId,
