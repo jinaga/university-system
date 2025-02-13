@@ -75,16 +75,23 @@ namespace University.Indexer
             return success;
         }
 
-        public async Task<bool> UpdateRecord(SearchRecord searchRecord)
+        public async Task<bool> UpdateRecordTime(string id, string days, string time)
         {
             var success = await ExecuteWithRetry(async () =>
             {
-                IUpdateResponse<SearchRecord> updateResponse = await client.UpdateAsync<SearchRecord, SearchRecord>(searchRecord.Id, u => u.Doc(searchRecord));
+                var updateResponse = await client.UpdateAsync<SearchRecord, object>(DocumentPath<SearchRecord>.Id(id), u => u
+                    .Index("offerings")
+                    .Doc(new
+                    {
+                        Days = days,
+                        Time = time
+                    })
+                );
                 return updateResponse.IsValid;
             });
             if (!success)
             {
-                Console.WriteLine($"Failed to update {searchRecord.CourseCode} {searchRecord.CourseName}");
+                Console.WriteLine($"Failed to update {id}");
             }
             return success;
         }

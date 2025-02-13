@@ -117,13 +117,7 @@ await consoleApp.RunAsync(async () =>
     {
         var record = update.record;
         var time = update.time;
-        var searchRecord = new SearchRecord
-        {
-            Id = record.recordId,
-            Days = time.days,
-            Time = time.time
-        };
-        bool indexed = await elasticsearchClient.IndexRecord(searchRecord);
+        bool indexed = await elasticsearchClient.UpdateRecordTime(record.recordId, time.days, time.time);
 
         if (indexed)
         {
