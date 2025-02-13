@@ -95,5 +95,45 @@ namespace University.Indexer
             }
             return success;
         }
+
+        public async Task<bool> UpdateRecordLocation(string id, string building, string room)
+        {
+            var success = await ExecuteWithRetry(async () =>
+            {
+                var updateResponse = await client.UpdateAsync<SearchRecord, object>(DocumentPath<SearchRecord>.Id(id), u => u
+                    .Index("offerings")
+                    .Doc(new
+                    {
+                        Location = $"{building} {room}"
+                    })
+                );
+                return updateResponse.IsValid;
+            });
+            if (!success)
+            {
+                Console.WriteLine($"Failed to update location for {id}");
+            }
+            return success;
+        }
+
+        public async Task<bool> UpdateRecordInstructor(string id, string instructor)
+        {
+            var success = await ExecuteWithRetry(async () =>
+            {
+                var updateResponse = await client.UpdateAsync<SearchRecord, object>(DocumentPath<SearchRecord>.Id(id), u => u
+                    .Index("offerings")
+                    .Doc(new
+                    {
+                        Instructor = instructor
+                    })
+                );
+                return updateResponse.IsValid;
+            });
+            if (!success)
+            {
+                Console.WriteLine($"Failed to update instructor for {id}");
+            }
+            return success;
+        }
     }
 }
