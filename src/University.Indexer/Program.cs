@@ -40,6 +40,7 @@ using var meterProvider = Telemetry.SetupMetrics("University.Indexer", OTEL_EXPO
 
 var meter = new Meter("University.Indexer", "1.0.0");
 var offeringsIndexedCounter = meter.CreateCounter<long>("offerings_indexed");
+var offeringsUpdatedCounter = meter.CreateCounter<long>("offerings_updated");
 
 logger.Information("Starting University.Indexer...");
 
@@ -96,9 +97,48 @@ await consoleApp.RunAsync(async () =>
         }
     });
 
+    var offeringsToUpdateTime = Given<Semester>.Match(semester =>
+        from offering in semester.Successors().OfType<Offering>(offering => offering.semester)
+        where offering.Successors().No<OfferingDelete>(deleted => deleted.offering)
+        from time in offering.Successors().OfType<OfferingTime>(time => time.offering)
+        where time.Successors().No<OfferingTime>(next => next.prior)
+        from record in offering.Successors().OfType<SearchIndexRecord>(record => record.offering)
+        where !(
+            from update in record.Successors().OfType<SearchIndexRecordTimeUpdate>(update => update.record)
+            where update.time == time
+            select update
+        ).Any()
+        select new
+        {
+            record,
+            time
+        });
+    var timeUpdateSubscription = j.Subscribe(offeringsToUpdateTime, currentSemester, async update =>
+    {
+        var record = update.record;
+        var time = update.time;
+        var searchRecord = new SearchRecord
+        {
+            Id = record.recordId,
+            Days = time.days,
+            Time = time.time
+        };
+        bool indexed = await elasticsearchClient.IndexRecord(searchRecord);
+
+        if (indexed)
+        {
+            await j.Fact(new SearchIndexRecordTimeUpdate(record, time));
+            offeringsUpdatedCounter.Add(1,
+                new KeyValuePair<string, object?>("courseCode", record.offering.course.code),
+                new KeyValuePair<string, object?>("courseName", record.offering.course.name));
+            logger.Information("Updated time of {CourseCode} {CourseName}", record.offering.course.code, record.offering.course.name);
+        }
+    });
+
     return async () =>
     {
         indexInsertSubscription.Stop();
+        timeUpdateSubscription.Stop();
         await j.DisposeAsync();
         logger.Information("Stopped indexing course offerings.");
     };

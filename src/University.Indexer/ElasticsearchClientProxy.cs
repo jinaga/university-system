@@ -37,7 +37,7 @@ namespace University.Indexer
             }
         }
 
-        public async Task<bool> IndexRecord(SearchRecord searchRecord)
+        private async Task<T> ExecuteWithRetry<T>(Func<Task<T>> action)
         {
             int retryCount = 0;
             const int maxRetries = 10;
@@ -47,11 +47,8 @@ namespace University.Indexer
             {
                 try
                 {
-                    var response = await client.IndexDocumentAsync(searchRecord);
-                    if (response.IsValid)
-                    {
-                        return true;
-                    }
+                    var response = await action();
+                    return response;
                 }
                 catch (Exception)
                 {
@@ -61,8 +58,35 @@ namespace University.Indexer
                 await Task.Delay(delayMilliseconds * (int)Math.Pow(2, retryCount));
             }
 
-            Console.WriteLine($"Failed to index {searchRecord.CourseCode} after {maxRetries} attempts.");
-            return false;
+            return default;
+        }
+
+        public async Task<bool> IndexRecord(SearchRecord searchRecord)
+        {
+            var success = await ExecuteWithRetry(async () =>
+            {
+                IIndexResponse indexResponse = await client.IndexDocumentAsync(searchRecord);
+                return indexResponse.IsValid;
+            });
+            if (!success)
+            {
+                Console.WriteLine($"Failed to index {searchRecord.CourseCode} {searchRecord.CourseName}");
+            }
+            return success;
+        }
+
+        public async Task<bool> UpdateRecord(SearchRecord searchRecord)
+        {
+            var success = await ExecuteWithRetry(async () =>
+            {
+                IUpdateResponse<SearchRecord> updateResponse = await client.UpdateAsync<SearchRecord, SearchRecord>(searchRecord.Id, u => u.Doc(searchRecord));
+                return updateResponse.IsValid;
+            });
+            if (!success)
+            {
+                Console.WriteLine($"Failed to update {searchRecord.CourseCode} {searchRecord.CourseName}");
+            }
+            return success;
         }
     }
 }
