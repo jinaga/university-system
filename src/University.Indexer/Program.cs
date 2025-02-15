@@ -1,10 +1,14 @@
-﻿using Jinaga;
+﻿﻿using Jinaga;
 using Jinaga.Extensions;
 using University.Indexer;
 using University.Model;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Logs;
+using Microsoft.Extensions.Logging;
+using Serilog;
+using Serilog.Formatting.Compact;
 
 var REPLICATOR_URL = Environment.GetEnvironmentVariable("REPLICATOR_URL");
 var ENVIRONMENT_PUBLIC_KEY = Environment.GetEnvironmentVariable("ENVIRONMENT_PUBLIC_KEY");
@@ -32,13 +36,39 @@ if (REPLICATOR_URL == null || ENVIRONMENT_PUBLIC_KEY == null || ELASTICSEARCH_UR
     return;
 }
 
+// Configure Serilog
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .Enrich.WithEnvironmentName()
+    .Enrich.WithMachineName()
+    .WriteTo.Console(new CompactJsonFormatter())
+    .CreateLogger();
+
+// Create logger factory with Serilog and OpenTelemetry
+using var loggerFactory = LoggerFactory.Create(builder =>
+{
+    builder
+        .AddSerilog(Log.Logger)
+        .AddOpenTelemetry(options =>
+        {
+            options
+                .AddOtlpExporter(otlpOptions => 
+                {
+                    otlpOptions.Endpoint = new Uri(OTEL_EXPORTER_OTLP_ENDPOINT);
+                });
+        });
+});
+
+var logger = loggerFactory.CreateLogger<Program>();
+
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddSource("University.Indexer")
     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("University.Indexer"))
     .AddOtlpExporter(options => options.Endpoint = new Uri(OTEL_EXPORTER_OTLP_ENDPOINT))
     .Build();
 
-Console.WriteLine("Indexing course offerings...");
+logger.LogInformation("Starting University.Indexer...");
+logger.LogInformation("Indexing course offerings...");
 
 var elasticsearchClient = new ElasticsearchClientProxy(ELASTICSEARCH_URL);
 
@@ -77,12 +107,12 @@ var indexInsertSubscription = j.Subscribe(offeringsToIndex, currentSemester, asy
     if (indexed)
     {
         await j.Fact(new SearchIndexRecord(offering, recordId));
-        Console.WriteLine($"Indexed {offering.course.code} {offering.course.name}");
+        logger.LogInformation("Indexed course {CourseCode} {CourseName}", offering.course.code, offering.course.name);
     }
 });
 
 // Keep the application running
-Console.WriteLine("Press Ctrl+C to exit.");
+logger.LogInformation("Press Ctrl+C to exit.");
 var exitEvent = new TaskCompletionSource<bool>();
 
 Console.CancelKeyPress += (sender, eventArgs) => {
@@ -98,4 +128,5 @@ await exitEvent.Task;
 
 indexInsertSubscription.Stop();
 await j.DisposeAsync();
-Console.WriteLine("Stopped indexing course offerings.");
+logger.LogInformation("Stopped indexing course offerings.");
+Log.CloseAndFlush();

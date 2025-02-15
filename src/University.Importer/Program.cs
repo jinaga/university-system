@@ -1,9 +1,11 @@
-﻿using University.Importer;
+﻿﻿using University.Importer;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Logs;
 using Microsoft.Extensions.Logging;
+using Serilog;
+using Serilog.Formatting.Compact;
 
 var REPLICATOR_URL = Environment.GetEnvironmentVariable("REPLICATOR_URL");
 var ENVIRONMENT_PUBLIC_KEY = Environment.GetEnvironmentVariable("ENVIRONMENT_PUBLIC_KEY");
@@ -50,17 +52,34 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddConsoleExporter() // Add console exporter for debugging
     .Build();
 
+// Configure Serilog
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .Enrich.WithEnvironmentName()
+    .Enrich.WithMachineName()
+    .WriteTo.Console(new CompactJsonFormatter())
+    .CreateLogger();
+
+// Create logger factory with Serilog and OpenTelemetry
 using var loggerFactory = LoggerFactory.Create(builder =>
 {
-    builder.AddOpenTelemetry(options =>
-    {
-        options.AddConsoleExporter();
-    });
+    builder
+        .AddSerilog(Log.Logger)
+        .AddOpenTelemetry(options =>
+        {
+            options
+                .AddOtlpExporter(otlpOptions => 
+                {
+                    otlpOptions.Endpoint = new Uri(OTEL_EXPORTER_OTLP_ENDPOINT);
+                });
+        });
 });
 
 var logger = loggerFactory.CreateLogger<Program>();
 
-logger.LogInformation("Starting University.Importer...");
+try
+{
+    logger.LogInformation("Starting University.Importer...");
 
 var j = JinagaClientFactory.CreateClient(REPLICATOR_URL);
 
@@ -87,3 +106,13 @@ await exitEvent.Task;
 
 watcher.StopWatching();
 await j.DisposeAsync();
+}
+catch (Exception ex)
+{
+    logger.LogError(ex, "An error occurred while running the importer");
+    throw;
+}
+finally
+{
+    Log.CloseAndFlush();
+}
