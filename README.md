@@ -62,64 +62,41 @@ You can override these in the docker-compose.yml file or by setting them in your
 
 ## Telemetry and tracing
 
-This project uses OpenTelemetry for collecting telemetry data and Jaeger for visualizing traces. This helps in monitoring and debugging the system by providing insights into the application's performance and behavior.
-
-### Configuring OpenTelemetry collector
-
-1. Create a configuration file for the OpenTelemetry Collector named `otel-collector-config.yml` in the `mesh` directory. The file should define the receivers, processors, and exporters for the collector. Here is an example configuration:
-
-    ```yaml
-    receivers:
-      otlp:
-        protocols:
-          grpc:
-          http:
-
-    exporters:
-      logging:
-        loglevel: debug
-      jaeger:
-        endpoint: "http://jaeger:14250"
-        tls:
-          insecure: true
-
-    service:
-      pipelines:
-        traces:
-          receivers: [otlp]
-          processors: []
-          exporters: [logging, jaeger]
-    ```
-
-2. In the `docker-compose.yml` file located in the `mesh` directory, add the OpenTelemetry Collector service. This service should use the `otel/opentelemetry-collector:latest` image and mount the configuration file created in the previous step.
-
-### Starting the services
-
-1. Navigate to the `mesh` directory:
-    ```bash
-    cd mesh
-    ```
-
-2. Pull the latest images (optional but recommended):
-    ```bash
-    docker compose pull
-    ```
-
-3. Build the services:
-    ```bash
-    docker compose build
-    ```
-
-4. Start the services:
-    ```bash
-    docker compose up --build
-    ```
-
-This will start all services, including the OpenTelemetry Collector and Jaeger.
+This project uses OpenTelemetry for collecting telemetry data and Jaeger for visualizing traces, Grafana Loki for log aggregation and visualization, and Promtail to collect logs. This helps in monitoring and debugging the system by providing insights into the application's performance and behavior.
 
 ### Viewing traces in Jaeger
 
 1. Open a web browser and navigate to `http://localhost:16686`.
 2. Use the Jaeger UI to search for and view traces collected by the OpenTelemetry Collector.
 
-By following these steps, new developers will be able to configure and use Jaeger and OpenTelemetry for tracing and monitoring the system.
+### Viewing Logs in Grafana
+
+After starting the services with `docker compose up`, follow these steps to view the logs:
+
+1. Access Grafana:
+   - Open a web browser and navigate to `http://localhost:3000`
+   - Log in with the default credentials:
+     * Username: admin
+     * Password: admin
+   - You may be prompted to change the password, which you can skip for now
+
+2. Configure Loki Data Source:
+   - Click on the Connections (overlapping circles) icon in the left sidebar
+   - Select "Data sources"
+   - Click "Add data source"
+   - Search for and select "Loki"
+   - Set the following configuration:
+     * URL: `http://loki:3100`
+     * Leave Authentication set to "No Authentication"
+     * Leave other settings at their defaults
+   - Click "Save & test" to verify the connection
+
+3. View and Query Logs:
+   - Click on "Explore" in the left sidebar
+   - Select "Loki" as the data source
+   - Use LogQL queries to filter and view logs:
+     * `{container="university-mesh-importer-1"}` - View Importer service logs
+     * `{container="university-mesh-indexer-1"}` - View Indexer service logs
+   - Click "Run query" to see the results
+
+The logs are collected by Promtail and stored in Loki, providing a centralized view of all application logs. You can use Grafana's powerful querying and visualization capabilities to analyze the logs and create dashboards.
