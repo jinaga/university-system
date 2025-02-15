@@ -62,7 +62,7 @@ You can override these in the docker-compose.yml file or by setting them in your
 
 ## Telemetry and tracing
 
-This project uses OpenTelemetry for collecting telemetry data and Jaeger for visualizing traces, Grafana Loki for log aggregation and visualization, and Promtail to collect logs. This helps in monitoring and debugging the system by providing insights into the application's performance and behavior.
+This project uses OpenTelemetry for collecting telemetry data and Jaeger for visualizing traces, Grafana and Loki for log aggregation and visualization, and Prometheus for analyzing metrics. This helps in monitoring and debugging the system by providing insights into the application's performance and behavior.
 
 ### Viewing traces in Jaeger
 
@@ -98,5 +98,3 @@ After starting the services with `docker compose up`, follow these steps to view
      * `{container="university-mesh-importer-1"}` - View Importer service logs
      * `{container="university-mesh-indexer-1"}` - View Indexer service logs
    - Click "Run query" to see the results
-
-The logs are collected by Promtail and stored in Loki, providing a centralized view of all application logs. You can use Grafana's powerful querying and visualization capabilities to analyze the logs and create dashboards.

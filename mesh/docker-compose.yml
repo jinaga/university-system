@@ -61,12 +61,6 @@ services:
       - elasticsearch
       - otel-collector
 
-  jaeger:
-    image: jaegertracing/all-in-one:latest
-    container_name: jaeger
-    ports:
-      - "16686:16686" # Jaeger UI
-
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
     container_name: otel-collector
@@ -80,6 +74,12 @@ services:
     volumes:
       - ./otel:/etc/otel:ro
     command: ["--config=/etc/otel/otel-collector-config.yml"]
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    ports:
+      - "16686:16686" # Jaeger UI
 
   prometheus:
     image: prom/prometheus:latest
@@ -103,16 +103,6 @@ services:
     command: -config.file=/etc/loki/local-config.yaml
     volumes:
       - loki_data:/loki
-
-  promtail:
-    image: grafana/promtail:latest
-    container_name: promtail
-    volumes:
-      - ./promtail:/etc/promtail
-      - /var/lib/docker/containers:/var/log/containers:ro
-    command: -config.file=/etc/promtail/promtail-config.yml
-    depends_on:
-      - loki
 
   grafana:
     image: grafana/grafana:latest
