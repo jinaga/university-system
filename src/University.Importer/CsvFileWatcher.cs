@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 
 using CsvHelper;
@@ -16,6 +17,7 @@ namespace University.Importer
         private readonly string _importDataPath;
         private readonly string _processedDataPath;
         private readonly string _errorDataPath;
+        private readonly ActivitySource _activitySource = new ActivitySource("University.Importer");
 
         private FileSystemWatcher? _watcher = null;
 
@@ -84,6 +86,10 @@ namespace University.Importer
 
         private async Task CreateFacts(CourseRecord record)
         {
+            using var activity = _activitySource.StartActivity("CreateFacts");
+            activity?.SetTag("courseCode", record.CourseCode);
+            activity?.SetTag("courseName", record.CourseName);
+
             var locationsOfOffering = Given<Offering>.Match(offering => offering.Locations.Select(location => location));
             var timesOfOffering = Given<Offering>.Match(offering => offering.Times.Select(time => time));
             var instructorsOfOffering = Given<Offering>.Match(offering => offering.Successors().OfType<OfferingInstructor>(instructor => instructor.offering)

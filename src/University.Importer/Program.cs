@@ -42,6 +42,8 @@ if (REPLICATOR_URL == null || ENVIRONMENT_PUBLIC_KEY == null || IMPORT_DATA_PATH
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddSource("University.Importer")
     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("University.Importer"))
+    .AddHttpClientInstrumentation()
+    .AddAspNetCoreInstrumentation()
     .AddOtlpExporter(options => options.Endpoint = new Uri(OTEL_EXPORTER_OTLP_ENDPOINT))
     .Build();
 
