@@ -2,6 +2,8 @@
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Logs;
+using Microsoft.Extensions.Logging;
 
 var REPLICATOR_URL = Environment.GetEnvironmentVariable("REPLICATOR_URL");
 var ENVIRONMENT_PUBLIC_KEY = Environment.GetEnvironmentVariable("ENVIRONMENT_PUBLIC_KEY");
@@ -45,7 +47,20 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddHttpClientInstrumentation()
     .AddAspNetCoreInstrumentation()
     .AddOtlpExporter(options => options.Endpoint = new Uri(OTEL_EXPORTER_OTLP_ENDPOINT))
+    .AddConsoleExporter() // Add console exporter for debugging
     .Build();
+
+using var loggerFactory = LoggerFactory.Create(builder =>
+{
+    builder.AddOpenTelemetry(options =>
+    {
+        options.AddConsoleExporter();
+    });
+});
+
+var logger = loggerFactory.CreateLogger<Program>();
+
+logger.LogInformation("Starting University.Importer...");
 
 var j = JinagaClientFactory.CreateClient(REPLICATOR_URL);
 
