@@ -49,7 +49,6 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddHttpClientInstrumentation()
     .AddAspNetCoreInstrumentation()
     .AddOtlpExporter(options => options.Endpoint = new Uri(OTEL_EXPORTER_OTLP_ENDPOINT))
-    .AddConsoleExporter() // Add console exporter for debugging
     .Build();
 
 // Configure Serilog
@@ -83,14 +82,14 @@ try
 
 var j = JinagaClientFactory.CreateClient(REPLICATOR_URL);
 
-Console.WriteLine("Importing courses...");
+logger.LogInformation("Importing courses...");
 
 var university = await UniversityDataSeeder.SeedData(j, ENVIRONMENT_PUBLIC_KEY);
 
 var watcher = new CsvFileWatcher(j, university, IMPORT_DATA_PATH, PROCESSED_DATA_PATH, ERROR_DATA_PATH);
 watcher.StartWatching();
 
-Console.WriteLine("Press Ctrl+C to exit.");
+logger.LogInformation("Press Ctrl+C to exit.");
 var exitEvent = new TaskCompletionSource<bool>();
 
 Console.CancelKeyPress += (sender, eventArgs) => {
