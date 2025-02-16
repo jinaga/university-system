@@ -1,11 +1,7 @@
 ﻿﻿using University.Importer;
-using OpenTelemetry;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Logs;
 using Microsoft.Extensions.Logging;
 using Serilog;
-using Serilog.Formatting.Compact;
+using University.Common;
 
 var REPLICATOR_URL = Environment.GetEnvironmentVariable("REPLICATOR_URL");
 var ENVIRONMENT_PUBLIC_KEY = Environment.GetEnvironmentVariable("ENVIRONMENT_PUBLIC_KEY");
@@ -43,68 +39,39 @@ if (REPLICATOR_URL == null || ENVIRONMENT_PUBLIC_KEY == null || IMPORT_DATA_PATH
     return;
 }
 
-using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .AddSource("University.Importer")
-    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("University.Importer"))
-    .AddHttpClientInstrumentation()
-    .AddAspNetCoreInstrumentation()
-    .AddOtlpExporter(options => options.Endpoint = new Uri(OTEL_EXPORTER_OTLP_ENDPOINT))
-    .Build();
-
-// Configure Serilog
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Information()
-    .Enrich.WithEnvironmentName()
-    .Enrich.WithMachineName()
-    .WriteTo.Console(new CompactJsonFormatter())
-    .CreateLogger();
-
-// Create logger factory with Serilog and OpenTelemetry
-using var loggerFactory = LoggerFactory.Create(builder =>
-{
-    builder
-        .AddSerilog(Log.Logger)
-        .AddOpenTelemetry(options =>
-        {
-            options
-                .AddOtlpExporter(otlpOptions => 
-                {
-                    otlpOptions.Endpoint = new Uri(OTEL_EXPORTER_OTLP_ENDPOINT);
-                });
-        });
-});
-
+var tracerProvider = Telemetry.SetupTracing("University.Importer", OTEL_EXPORTER_OTLP_ENDPOINT);
+var loggerFactory = Telemetry.SetupLogging(OTEL_EXPORTER_OTLP_ENDPOINT);
 var logger = loggerFactory.CreateLogger<Program>();
 
 try
 {
     logger.LogInformation("Starting University.Importer...");
 
-var j = JinagaClientFactory.CreateClient(REPLICATOR_URL);
+    var j = JinagaClientFactory.CreateClient(REPLICATOR_URL);
 
-logger.LogInformation("Importing courses...");
+    logger.LogInformation("Importing courses...");
 
-var university = await UniversityDataSeeder.SeedData(j, ENVIRONMENT_PUBLIC_KEY);
+    var university = await UniversityDataSeeder.SeedData(j, ENVIRONMENT_PUBLIC_KEY);
 
-var watcher = new CsvFileWatcher(j, university, IMPORT_DATA_PATH, PROCESSED_DATA_PATH, ERROR_DATA_PATH);
-watcher.StartWatching();
+    var watcher = new CsvFileWatcher(j, university, IMPORT_DATA_PATH, PROCESSED_DATA_PATH, ERROR_DATA_PATH);
+    watcher.StartWatching();
 
-logger.LogInformation("Press Ctrl+C to exit.");
-var exitEvent = new TaskCompletionSource<bool>();
+    logger.LogInformation("Press Ctrl+C to exit.");
+    var exitEvent = new TaskCompletionSource<bool>();
 
-Console.CancelKeyPress += (sender, eventArgs) => {
-    eventArgs.Cancel = true;
-    exitEvent.SetResult(true);
-};
+    Console.CancelKeyPress += (sender, eventArgs) => {
+        eventArgs.Cancel = true;
+        exitEvent.SetResult(true);
+    };
 
-AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) => {
-    exitEvent.SetResult(true);
-};
+    AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) => {
+        exitEvent.SetResult(true);
+    };
 
-await exitEvent.Task;
+    await exitEvent.Task;
 
-watcher.StopWatching();
-await j.DisposeAsync();
+    watcher.StopWatching();
+    await j.DisposeAsync();
 }
 catch (Exception ex)
 {
@@ -114,4 +81,5 @@ catch (Exception ex)
 finally
 {
     Log.CloseAndFlush();
+    tracerProvider.Dispose();
 }
