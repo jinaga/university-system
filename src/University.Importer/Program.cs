@@ -1,5 +1,4 @@
 ﻿﻿using University.Importer;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using University.Common;
 
@@ -40,42 +39,35 @@ if (REPLICATOR_URL == null || ENVIRONMENT_PUBLIC_KEY == null || IMPORT_DATA_PATH
 }
 
 var tracerProvider = Telemetry.SetupTracing("University.Importer", OTEL_EXPORTER_OTLP_ENDPOINT);
-var loggerFactory = Telemetry.SetupLogging(OTEL_EXPORTER_OTLP_ENDPOINT);
-var logger = loggerFactory.CreateLogger<Program>();
+var logger = Telemetry.SetupLogging(OTEL_EXPORTER_OTLP_ENDPOINT);
 
 try
 {
-    logger.LogInformation("Starting University.Importer...");
+    logger.Information("Starting University.Importer...");
 
-    var j = JinagaClientFactory.CreateClient(REPLICATOR_URL);
+    var consoleApp = new ConsoleApplication(logger, tracerProvider);
 
-    logger.LogInformation("Importing courses...");
+    await consoleApp.RunAsync(async () =>
+    {
+        var j = JinagaClientFactory.CreateClient(REPLICATOR_URL);
 
-    var university = await UniversityDataSeeder.SeedData(j, ENVIRONMENT_PUBLIC_KEY);
+        logger.Information("Importing courses...");
 
-    var watcher = new CsvFileWatcher(j, university, IMPORT_DATA_PATH, PROCESSED_DATA_PATH, ERROR_DATA_PATH);
-    watcher.StartWatching();
+        var university = await UniversityDataSeeder.SeedData(j, ENVIRONMENT_PUBLIC_KEY);
 
-    logger.LogInformation("Press Ctrl+C to exit.");
-    var exitEvent = new TaskCompletionSource<bool>();
+        var watcher = new CsvFileWatcher(j, university, IMPORT_DATA_PATH, PROCESSED_DATA_PATH, ERROR_DATA_PATH);
+        watcher.StartWatching();
 
-    Console.CancelKeyPress += (sender, eventArgs) => {
-        eventArgs.Cancel = true;
-        exitEvent.SetResult(true);
-    };
+        var exitEvent = consoleApp.SetupShutdown();
+        await exitEvent.Task;
 
-    AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) => {
-        exitEvent.SetResult(true);
-    };
-
-    await exitEvent.Task;
-
-    watcher.StopWatching();
-    await j.DisposeAsync();
+        watcher.StopWatching();
+        await j.DisposeAsync();
+    });
 }
 catch (Exception ex)
 {
-    logger.LogError(ex, "An error occurred while running the importer");
+    logger.Error(ex, "An error occurred while running the importer");
     throw;
 }
 finally

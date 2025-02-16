@@ -2,7 +2,6 @@ using OpenTelemetry;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Logs;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Formatting.Compact;
 
@@ -21,7 +20,7 @@ namespace University.Common
                 .Build();
         }
 
-        public static ILoggerFactory SetupLogging(string otlpEndpoint)
+        public static ILogger SetupLogging(string otlpEndpoint)
         {
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
@@ -30,19 +29,7 @@ namespace University.Common
                 .WriteTo.Console(new CompactJsonFormatter())
                 .CreateLogger();
 
-            return LoggerFactory.Create(builder =>
-            {
-                builder
-                    .AddSerilog(Log.Logger)
-                    .AddOpenTelemetry(options =>
-                    {
-                        options
-                            .AddOtlpExporter(otlpOptions => 
-                            {
-                                otlpOptions.Endpoint = new Uri(otlpEndpoint);
-                            });
-                    });
-            });
+            return Log.Logger;
         }
     }
 }
