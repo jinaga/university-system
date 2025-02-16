@@ -101,8 +101,8 @@ namespace University.Importer
             activity?.SetTag("courseCode", record.CourseCode);
             activity?.SetTag("courseName", record.CourseName);
 
-            var locationsOfOffering = Given<Offering>.Match(offering => offering.Locations.Select(location => location));
-            var timesOfOffering = Given<Offering>.Match(offering => offering.Times.Select(time => time));
+            var locationsOfOffering = Given<Offering>.Match(offering => offering.Locations);
+            var timesOfOffering = Given<Offering>.Match(offering => offering.Times);
             var instructorsOfOffering = Given<Offering>.Match(offering => offering.Successors().OfType<OfferingInstructor>(instructor => instructor.offering)
                 .WhereNo((OfferingInstructor next) => next.prior));
 
