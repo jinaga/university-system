@@ -3,7 +3,6 @@ using OpenTelemetry.Trace;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Logs;
 using Serilog;
-using Serilog.Formatting.Compact;
 
 namespace University.Common
 {
@@ -26,7 +25,7 @@ namespace University.Common
                 .MinimumLevel.Information()
                 .Enrich.WithEnvironmentName()
                 .Enrich.WithMachineName()
-                .WriteTo.Console(new CompactJsonFormatter())
+                .WriteTo.OpenTelemetry()
                 .CreateLogger();
 
             return Log.Logger;
