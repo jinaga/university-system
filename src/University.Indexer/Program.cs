@@ -96,10 +96,10 @@ await consoleApp.RunAsync(async () =>
         }
     });
 
-    var exitEvent = consoleApp.SetupShutdown();
-    await exitEvent.Task;
-
-    indexInsertSubscription.Stop();
-    await j.DisposeAsync();
-    logger.Information("Stopped indexing course offerings.");
+    return async () =>
+    {
+        indexInsertSubscription.Stop();
+        await j.DisposeAsync();
+        logger.Information("Stopped indexing course offerings.");
+    };
 });

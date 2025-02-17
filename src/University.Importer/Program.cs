@@ -61,11 +61,11 @@ try
         var watcher = new CsvFileWatcher(j, university, IMPORT_DATA_PATH, PROCESSED_DATA_PATH, ERROR_DATA_PATH, meter);
         watcher.StartWatching();
 
-        var exitEvent = consoleApp.SetupShutdown();
-        await exitEvent.Task;
-
-        watcher.StopWatching();
-        await j.DisposeAsync();
+        return async () =>
+        {
+            watcher.StopWatching();
+            await j.DisposeAsync();
+        };
     });
 }
 catch (Exception ex)

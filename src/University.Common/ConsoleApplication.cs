@@ -14,11 +14,14 @@ namespace University.Common
             _tracerProvider = tracerProvider;
         }
 
-        public async Task RunAsync(Func<Task> run)
+        public async Task RunAsync(Func<Task<Func<Task>>> run)
         {
             try
             {
-                await run();
+                var shutdown = await run();
+                var exitEvent = SetupShutdown();
+                await exitEvent.Task;
+                await shutdown();
             }
             catch (Exception ex)
             {
@@ -32,7 +35,7 @@ namespace University.Common
             }
         }
 
-        public TaskCompletionSource<bool> SetupShutdown()
+        private TaskCompletionSource<bool> SetupShutdown()
         {
             _logger.Information("Press Ctrl+C to exit.");
             var exitEvent = new TaskCompletionSource<bool>();
