@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Diagnostics.Metrics;
 
 using CsvHelper;
 
@@ -21,13 +22,18 @@ namespace University.Importer
 
         private FileSystemWatcher? _watcher = null;
 
-        public CsvFileWatcher(JinagaClient j, Organization university, string importDataPath, string processedDataPath, string errorDataPath)
+        private readonly Counter<long> _filesProcessed;
+        private readonly Counter<long> _rowsProcessed;
+
+        public CsvFileWatcher(JinagaClient j, Organization university, string importDataPath, string processedDataPath, string errorDataPath, Meter meter)
         {
             _j = j;
             _university = university;
             _importDataPath = importDataPath;
             _processedDataPath = processedDataPath;
             _errorDataPath = errorDataPath;
+            _filesProcessed = meter.CreateCounter<long>("files_processed");
+            _rowsProcessed = meter.CreateCounter<long>("rows_processed");
         }
 
         public void StartWatching()
@@ -64,6 +70,7 @@ namespace University.Importer
 
         private async Task ImportCsvFile(string filePath)
         {
+            _filesProcessed.Add(1, new KeyValuePair<string, object?>("file", Path.GetFileName(filePath)));
             try
             {
                 using var reader = new StreamReader(filePath);
@@ -86,6 +93,10 @@ namespace University.Importer
 
         private async Task CreateFacts(CourseRecord record)
         {
+            _rowsProcessed.Add(1,
+                new KeyValuePair<string, object?>("courseCode", Path.GetFileName(record.CourseCode)),
+                new KeyValuePair<string, object?>("courseName", Path.GetFileName(record.CourseName)));
+
             using var activity = _activitySource.StartActivity("CreateFacts");
             activity?.SetTag("courseCode", record.CourseCode);
             activity?.SetTag("courseName", record.CourseName);

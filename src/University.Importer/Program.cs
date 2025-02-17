@@ -1,6 +1,7 @@
 ﻿﻿using University.Importer;
 using Serilog;
 using University.Common;
+using System.Diagnostics.Metrics;
 
 var REPLICATOR_URL = Environment.GetEnvironmentVariable("REPLICATOR_URL");
 var ENVIRONMENT_PUBLIC_KEY = Environment.GetEnvironmentVariable("ENVIRONMENT_PUBLIC_KEY");
@@ -38,8 +39,9 @@ if (REPLICATOR_URL == null || ENVIRONMENT_PUBLIC_KEY == null || IMPORT_DATA_PATH
     return;
 }
 
-var tracerProvider = Telemetry.SetupTracing("University.Importer", OTEL_EXPORTER_OTLP_ENDPOINT);
+using var tracerProvider = Telemetry.SetupTracing("University.Importer", OTEL_EXPORTER_OTLP_ENDPOINT);
 var logger = Telemetry.SetupLogging(OTEL_EXPORTER_OTLP_ENDPOINT);
+using var meterProvider = Telemetry.SetupMetrics("University.Importer", OTEL_EXPORTER_OTLP_ENDPOINT);
 
 try
 {
@@ -55,7 +57,8 @@ try
 
         var university = await UniversityDataSeeder.SeedData(j, ENVIRONMENT_PUBLIC_KEY);
 
-        var watcher = new CsvFileWatcher(j, university, IMPORT_DATA_PATH, PROCESSED_DATA_PATH, ERROR_DATA_PATH);
+        var meter = new Meter("University.Importer", "1.0.0");
+        var watcher = new CsvFileWatcher(j, university, IMPORT_DATA_PATH, PROCESSED_DATA_PATH, ERROR_DATA_PATH, meter);
         watcher.StartWatching();
 
         var exitEvent = consoleApp.SetupShutdown();
@@ -73,5 +76,4 @@ catch (Exception ex)
 finally
 {
     Log.CloseAndFlush();
-    tracerProvider.Dispose();
 }

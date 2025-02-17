@@ -4,6 +4,7 @@ using University.Indexer;
 using University.Model;
 using University.Common;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 
 var REPLICATOR_URL = Environment.GetEnvironmentVariable("REPLICATOR_URL");
 var ENVIRONMENT_PUBLIC_KEY = Environment.GetEnvironmentVariable("ENVIRONMENT_PUBLIC_KEY");
@@ -31,9 +32,14 @@ if (REPLICATOR_URL == null || ENVIRONMENT_PUBLIC_KEY == null || ELASTICSEARCH_UR
     return;
 }
 
-var tracerProvider = Telemetry.SetupTracing("University.Indexer", OTEL_EXPORTER_OTLP_ENDPOINT);
+using var tracerProvider = Telemetry.SetupTracing("University.Indexer", OTEL_EXPORTER_OTLP_ENDPOINT);
 var logger = Telemetry.SetupLogging(OTEL_EXPORTER_OTLP_ENDPOINT);
 var activitySource = new ActivitySource("University.Indexer");
+
+using var meterProvider = Telemetry.SetupMetrics("University.Indexer", OTEL_EXPORTER_OTLP_ENDPOINT);
+
+var meter = new Meter("University.Indexer", "1.0.0");
+var offeringsIndexedCounter = meter.CreateCounter<long>("offerings_indexed");
 
 logger.Information("Starting University.Indexer...");
 
@@ -49,8 +55,6 @@ await consoleApp.RunAsync(async () =>
     {
         options.HttpEndpoint = new Uri(REPLICATOR_URL);
     });
-
-    using var activity = activitySource.StartActivity("Start Indexer");
 
     var creator = await j.Fact(new User(ENVIRONMENT_PUBLIC_KEY));
     var university = await j.Fact(new Organization(creator, "6003"));
@@ -85,10 +89,12 @@ await consoleApp.RunAsync(async () =>
         if (indexed)
         {
             await j.Fact(new SearchIndexRecord(offering, recordId));
+            offeringsIndexedCounter.Add(1,
+                new KeyValuePair<string, object?>("courseCode", offering.course.code),
+                new KeyValuePair<string, object?>("courseName", offering.course.name));
             logger.Information("Indexed course {CourseCode} {CourseName}", offering.course.code, offering.course.name);
         }
     });
-    activity?.Dispose();
 
     var exitEvent = consoleApp.SetupShutdown();
     await exitEvent.Task;

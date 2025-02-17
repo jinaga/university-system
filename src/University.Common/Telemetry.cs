@@ -3,6 +3,7 @@ using OpenTelemetry.Trace;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Logs;
 using Serilog;
+using OpenTelemetry.Metrics;
 
 namespace University.Common
 {
@@ -29,6 +30,18 @@ namespace University.Common
                 .CreateLogger();
 
             return Log.Logger;
+        }
+
+        public static MeterProvider SetupMetrics(string serviceName, string otlpEndpoint)
+        {
+            return Sdk.CreateMeterProviderBuilder()
+                .AddMeter(serviceName)
+                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName))
+                .AddOtlpExporter(o =>
+                {
+                    o.Endpoint = new Uri(otlpEndpoint);
+                })
+                .Build();
         }
     }
 }

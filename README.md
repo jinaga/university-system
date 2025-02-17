@@ -98,3 +98,26 @@ After starting the services with `docker compose up`, follow these steps to view
      * `{container="university-mesh-importer-1"}` - View Importer service logs
      * `{container="university-mesh-indexer-1"}` - View Indexer service logs
    - Click "Run query" to see the results
+
+### Viewing metrics in Prometheus
+
+1. Open a web browser and navigate to `http://localhost:9090`.
+2. Use the Prometheus UI to run queries and view metrics collected by the OpenTelemetry Collector.
+
+#### Example Queries
+
+Use the following queries to check throughput:
+- Files processed by the Importer:
+  ```prometheus
+  sum(increase(files_processed_total[5m]))
+  ```
+- Rows processed by the Importer:
+  ```prometheus
+  sum(increase(rows_processed_total[5m]))
+  ```
+- Offerings indexed by the Indexer:
+  ```prometheus
+  sum(increase(offerings_indexed_total[5m]))
+  ```
+
+These queries show how many files, rows, and offerings have been processed in the last five minutes, helping you monitor the system's throughput.
