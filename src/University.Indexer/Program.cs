@@ -3,6 +3,7 @@ using Jinaga.Extensions;
 using University.Indexer;
 using University.Model;
 using University.Common;
+using System.Diagnostics;
 
 var REPLICATOR_URL = Environment.GetEnvironmentVariable("REPLICATOR_URL");
 var ENVIRONMENT_PUBLIC_KEY = Environment.GetEnvironmentVariable("ENVIRONMENT_PUBLIC_KEY");
@@ -32,6 +33,7 @@ if (REPLICATOR_URL == null || ENVIRONMENT_PUBLIC_KEY == null || ELASTICSEARCH_UR
 
 var tracerProvider = Telemetry.SetupTracing("University.Indexer", OTEL_EXPORTER_OTLP_ENDPOINT);
 var logger = Telemetry.SetupLogging(OTEL_EXPORTER_OTLP_ENDPOINT);
+var activitySource = new ActivitySource("University.Indexer");
 
 logger.Information("Starting University.Indexer...");
 
@@ -48,6 +50,8 @@ await consoleApp.RunAsync(async () =>
         options.HttpEndpoint = new Uri(REPLICATOR_URL);
     });
 
+    using var activity = activitySource.StartActivity("Start Indexer");
+
     var creator = await j.Fact(new User(ENVIRONMENT_PUBLIC_KEY));
     var university = await j.Fact(new Organization(creator, "6003"));
     var currentSemester = await j.Fact(new Semester(university, 2022, "Spring"));
@@ -59,6 +63,11 @@ await consoleApp.RunAsync(async () =>
         select offering);
     var indexInsertSubscription = j.Subscribe(offeringsToIndex, currentSemester, async offering =>
     {
+        // Start a new activity for each offering
+        using var activity = activitySource.StartActivity("IndexOffering");
+        activity?.SetTag("courseCode", offering.course.code);
+        activity?.SetTag("courseName", offering.course.name);
+
         // Create and index a record for the offering
         var recordId = j.Hash(offering);
         var searchRecord = new SearchRecord
@@ -79,6 +88,7 @@ await consoleApp.RunAsync(async () =>
             logger.Information("Indexed course {CourseCode} {CourseName}", offering.course.code, offering.course.name);
         }
     });
+    activity?.Dispose();
 
     var exitEvent = consoleApp.SetupShutdown();
     await exitEvent.Task;
