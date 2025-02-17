@@ -1,12 +1,16 @@
-﻿using University.Importer;
+﻿﻿using University.Importer;
+using Serilog;
+using University.Common;
+using System.Diagnostics.Metrics;
 
 var REPLICATOR_URL = Environment.GetEnvironmentVariable("REPLICATOR_URL");
 var ENVIRONMENT_PUBLIC_KEY = Environment.GetEnvironmentVariable("ENVIRONMENT_PUBLIC_KEY");
 var IMPORT_DATA_PATH = Environment.GetEnvironmentVariable("IMPORT_DATA_PATH");
 var PROCESSED_DATA_PATH = Environment.GetEnvironmentVariable("PROCESSED_DATA_PATH");
 var ERROR_DATA_PATH = Environment.GetEnvironmentVariable("ERROR_DATA_PATH");
+var OTEL_EXPORTER_OTLP_ENDPOINT = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT");
 
-if (REPLICATOR_URL == null || ENVIRONMENT_PUBLIC_KEY == null || IMPORT_DATA_PATH == null || PROCESSED_DATA_PATH == null || ERROR_DATA_PATH == null)
+if (REPLICATOR_URL == null || ENVIRONMENT_PUBLIC_KEY == null || IMPORT_DATA_PATH == null || PROCESSED_DATA_PATH == null || ERROR_DATA_PATH == null || OTEL_EXPORTER_OTLP_ENDPOINT == null)
 {
     if (REPLICATOR_URL == null)
     {
@@ -28,31 +32,48 @@ if (REPLICATOR_URL == null || ENVIRONMENT_PUBLIC_KEY == null || IMPORT_DATA_PATH
     {
         Console.WriteLine("Please set the environment variable ERROR_DATA_PATH.");
     }
+    if (OTEL_EXPORTER_OTLP_ENDPOINT == null)
+    {
+        Console.WriteLine("Please set the environment variable OTEL_EXPORTER_OTLP_ENDPOINT.");
+    }
     return;
 }
 
-var j = JinagaClientFactory.CreateClient(REPLICATOR_URL);
+using var tracerProvider = Telemetry.SetupTracing("University.Importer", OTEL_EXPORTER_OTLP_ENDPOINT);
+var logger = Telemetry.SetupLogging(OTEL_EXPORTER_OTLP_ENDPOINT);
+using var meterProvider = Telemetry.SetupMetrics("University.Importer", OTEL_EXPORTER_OTLP_ENDPOINT);
 
-Console.WriteLine("Importing courses...");
+try
+{
+    logger.Information("Starting University.Importer...");
 
-var university = await UniversityDataSeeder.SeedData(j, ENVIRONMENT_PUBLIC_KEY);
+    var consoleApp = new ConsoleApplication(logger, tracerProvider);
 
-var watcher = new CsvFileWatcher(j, university, IMPORT_DATA_PATH, PROCESSED_DATA_PATH, ERROR_DATA_PATH);
-watcher.StartWatching();
+    await consoleApp.RunAsync(async () =>
+    {
+        var j = JinagaClientFactory.CreateClient(REPLICATOR_URL);
 
-Console.WriteLine("Press Ctrl+C to exit.");
-var exitEvent = new TaskCompletionSource<bool>();
+        logger.Information("Importing courses...");
 
-Console.CancelKeyPress += (sender, eventArgs) => {
-    eventArgs.Cancel = true;
-    exitEvent.SetResult(true);
-};
+        var university = await UniversityDataSeeder.SeedData(j, ENVIRONMENT_PUBLIC_KEY);
 
-AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) => {
-    exitEvent.SetResult(true);
-};
+        var meter = new Meter("University.Importer", "1.0.0");
+        var watcher = new CsvFileWatcher(j, university, IMPORT_DATA_PATH, PROCESSED_DATA_PATH, ERROR_DATA_PATH, meter);
+        watcher.StartWatching();
 
-await exitEvent.Task;
-
-watcher.StopWatching();
-await j.DisposeAsync();
+        return async () =>
+        {
+            watcher.StopWatching();
+            await j.DisposeAsync();
+        };
+    });
+}
+catch (Exception ex)
+{
+    logger.Error(ex, "An error occurred while running the importer");
+    throw;
+}
+finally
+{
+    Log.CloseAndFlush();
+}
