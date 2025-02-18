@@ -19,6 +19,7 @@ The system consists of several components running in Docker containers:
 
 - Docker and Docker Compose
 - .NET 9.0 SDK (for local development)
+- [Graphviz](https://graphviz.org) (for generating diagrams in the notebook)
 
 ### Starting the Mesh
 
@@ -27,29 +28,19 @@ The system consists of several components running in Docker containers:
    cd mesh
    ```
 
-2. Set your environment public key (optional - defaults to "default-public-key"):
-   ```bash
-   export ENVIRONMENT_PUBLIC_KEY=your-public-key
-   ```
-
-3. Pull the latest images (optional but recommended):
+2. Pull the latest images (optional but recommended):
    ```bash
    docker compose pull
    ```
 
-4. Build the services:
+3. Build and start the services:
    ```bash
-   docker compose build
+   docker compose up -d --build
    ```
 
-5. Start the services:
-   ```bash
-   docker compose up --build
-   ```
+This will build the University.Importer and University.Indexer Docker images and start all services.
 
-This will build the University.Importer and University.Indexer Docker images and start all services. The importer will automatically populate the initial course data. The indexer will update the Elasticsearch index.
-
-If you make any changes to source code, please remember to run `docker compose build`. Then use `docker compose down` and `docker compose up` to create new containers for those rebuilt images.
+If you make any changes to source code, just run `docker compose up -d --build` again to rebuild and restart the services.
 
 ### Running the Demo
 
@@ -62,15 +53,6 @@ The demo shows two processes communicating via a replicator. One process is the 
 5. Refresh the Elasticsearch index page. You should see the offerings in the index.
 
 Use Jaeger, Grafana, and Prometheus to view traces, logs, and metrics.
-
-### Environment Variables
-
-The University.Importer service uses the following environment variables:
-
-- `REPLICATOR_URL`: URL of the Jinaga replicator service (default: http://back-end-replicator:8080)
-- `ENVIRONMENT_PUBLIC_KEY`: Public key for the environment (default: default-public-key)
-
-You can override these in the docker-compose.yml file or by setting them in your environment before running docker compose.
 
 ## Telemetry and tracing
 
