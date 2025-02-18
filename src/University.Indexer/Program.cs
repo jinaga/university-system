@@ -1,6 +1,6 @@
 ﻿﻿using Jinaga;
-using Jinaga.Extensions;
 using University.Indexer;
+using University.Indexer.Services;
 using University.Model;
 using University.Common;
 using System.Diagnostics;
@@ -61,141 +61,27 @@ await consoleApp.RunAsync(async () =>
     var university = await j.Fact(new Organization(creator, "6003"));
     var currentSemester = await j.Fact(new Semester(university, 2022, "Spring"));
 
-    var offeringsToIndex = Given<Semester>.Match(semester =>
-        from offering in semester.Successors().OfType<Offering>(offering => offering.semester)
-        where offering.Successors().No<OfferingDelete>(deleted => deleted.offering)
-        where offering.Successors().No<SearchIndexRecord>(record => record.offering)
-        select offering);
-    var indexInsertSubscription = j.Subscribe(offeringsToIndex, currentSemester, async offering =>
+    var services = new List<IService>
     {
-        // Create and index a record for the offering
-        var recordId = j.Hash(offering).Replace('+', '-').Replace('/', '_').TrimEnd('=');
-        var searchRecord = new SearchRecord
-        {
-            Id = recordId,
-            CourseCode = offering.course.code,
-            CourseName = offering.course.name,
-            Days = "TBA",
-            Time = "TBA",
-            Instructor = "TBA",
-            Location = "TBA"
-        };
-        bool indexed = await elasticsearchClient.IndexRecord(searchRecord);
+        new OfferIndexService(j, elasticsearchClient, logger, offeringsIndexedCounter, currentSemester),
+        new OfferTimeUpdateService(j, elasticsearchClient, logger, offeringsUpdatedCounter, currentSemester),
+        new OfferLocationUpdateService(j, elasticsearchClient, logger, offeringsUpdatedCounter, currentSemester),
+        new OfferInstructorUpdateService(j, elasticsearchClient, logger, offeringsUpdatedCounter, currentSemester)
+    };
 
-        if (indexed)
-        {
-            await j.Fact(new SearchIndexRecord(offering, recordId));
-            offeringsIndexedCounter.Add(1,
-                new KeyValuePair<string, object?>("courseCode", offering.course.code),
-                new KeyValuePair<string, object?>("courseName", offering.course.name));
-            logger.Information("Indexed course {CourseCode} {CourseName}", offering.course.code, offering.course.name);
-        }
-    });
-
-    var offeringsToUpdateTime = Given<Semester>.Match(semester =>
-        from offering in semester.Successors().OfType<Offering>(offering => offering.semester)
-        where offering.Successors().No<OfferingDelete>(deleted => deleted.offering)
-        from time in offering.Successors().OfType<OfferingTime>(time => time.offering)
-        where time.Successors().No<OfferingTime>(next => next.prior)
-        from record in offering.Successors().OfType<SearchIndexRecord>(record => record.offering)
-        where !(
-            from update in record.Successors().OfType<SearchIndexRecordTimeUpdate>(update => update.record)
-            where update.time == time
-            select update
-        ).Any()
-        select new
-        {
-            record,
-            time
-        });
-    var timeUpdateSubscription = j.Subscribe(offeringsToUpdateTime, currentSemester, async update =>
+    // Start all services
+    foreach (var service in services)
     {
-        var record = update.record;
-        var time = update.time;
-        bool indexed = await elasticsearchClient.UpdateRecordTime(record.recordId, time.days, time.time);
-
-        if (indexed)
-        {
-            await j.Fact(new SearchIndexRecordTimeUpdate(record, time));
-            offeringsUpdatedCounter.Add(1,
-                new KeyValuePair<string, object?>("courseCode", record.offering.course.code),
-                new KeyValuePair<string, object?>("courseName", record.offering.course.name));
-            logger.Information("Updated time of {CourseCode} {CourseName}", record.offering.course.code, record.offering.course.name);
-        }
-    });
-
-    var offeringsToUpdateLocation = Given<Semester>.Match(semester =>
-        from offering in semester.Successors().OfType<Offering>(offering => offering.semester)
-        where offering.Successors().No<OfferingDelete>(deleted => deleted.offering)
-        from location in offering.Successors().OfType<OfferingLocation>(location => location.offering)
-        where location.Successors().No<OfferingLocation>(next => next.prior)
-        from record in offering.Successors().OfType<SearchIndexRecord>(record => record.offering)
-        where !(
-            from update in record.Successors().OfType<SearchIndexRecordLocationUpdate>(update => update.record)
-            where update.location == location
-            select update
-        ).Any()
-        select new
-        {
-            record,
-            location
-        });
-    var locationUpdateSubscription = j.Subscribe(offeringsToUpdateLocation, currentSemester, async update =>
-    {
-        var record = update.record;
-        var location = update.location;
-        bool indexed = await elasticsearchClient.UpdateRecordLocation(record.recordId, location.building, location.room);
-
-        if (indexed)
-        {
-            await j.Fact(new SearchIndexRecordLocationUpdate(record, location));
-            offeringsUpdatedCounter.Add(1,
-                new KeyValuePair<string, object?>("courseCode", record.offering.course.code),
-                new KeyValuePair<string, object?>("courseName", record.offering.course.name));
-            logger.Information("Updated location of {CourseCode} {CourseName}", record.offering.course.code, record.offering.course.name);
-        }
-    });
-
-    var offeringsToUpdateInstructor = Given<Semester>.Match(semester =>
-        from offering in semester.Successors().OfType<Offering>(offering => offering.semester)
-        where offering.Successors().No<OfferingDelete>(deleted => deleted.offering)
-        from offeringInstructor in offering.Successors().OfType<OfferingInstructor>(instructor => instructor.offering)
-        where offeringInstructor.Successors().No<OfferingInstructor>(next => next.prior)
-        from instructor in offeringInstructor.instructor.Successors().OfType<Instructor>(instructor => instructor)
-        from record in offering.Successors().OfType<SearchIndexRecord>(record => record.offering)
-        where !(
-            from update in record.Successors().OfType<SearchIndexRecordInstructorUpdate>(update => update.record)
-            where update.instructor == offeringInstructor
-            select update
-        ).Any()
-        select new
-        {
-            record,
-            offeringInstructor,
-            instructor.name
-        });
-    var instructorUpdateSubscription = j.Subscribe(offeringsToUpdateInstructor, currentSemester, async update =>
-    {
-        var record = update.record;
-        var offeringInstructor = update.offeringInstructor;
-        bool indexed = await elasticsearchClient.UpdateRecordInstructor(record.recordId, update.name);
-
-        if (indexed)
-        {
-            await j.Fact(new SearchIndexRecordInstructorUpdate(record, offeringInstructor));
-            offeringsUpdatedCounter.Add(1,
-                new KeyValuePair<string, object?>("courseCode", record.offering.course.code),
-                new KeyValuePair<string, object?>("courseName", record.offering.course.name));
-            logger.Information("Updated instructor of {CourseCode} {CourseName}", record.offering.course.code, record.offering.course.name);
-        }
-    });
+        await service.Start();
+    }
 
     return async () =>
     {
-        indexInsertSubscription.Stop();
-        timeUpdateSubscription.Stop();
-        locationUpdateSubscription.Stop();
-        instructorUpdateSubscription.Stop();
+        // Stop all services
+        foreach (var service in services)
+        {
+            await service.Stop();
+        }
         await j.DisposeAsync();
         logger.Information("Stopped indexing course offerings.");
     };
