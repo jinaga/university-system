@@ -33,7 +33,7 @@ if (REPLICATOR_URL == null || ENVIRONMENT_PUBLIC_KEY == null || ELASTICSEARCH_UR
 }
 
 using var tracerProvider = Telemetry.SetupTracing("University.Indexer", OTEL_EXPORTER_OTLP_ENDPOINT);
-var logger = Telemetry.SetupLogging(OTEL_EXPORTER_OTLP_ENDPOINT);
+var logger = Telemetry.SetupLogging("University.Indexer", OTEL_EXPORTER_OTLP_ENDPOINT);
 var activitySource = new ActivitySource("University.Indexer");
 
 using var meterProvider = Telemetry.SetupMetrics("University.Indexer", OTEL_EXPORTER_OTLP_ENDPOINT);

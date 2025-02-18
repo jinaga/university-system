@@ -20,12 +20,13 @@ namespace University.Common
                 .Build();
         }
 
-        public static ILogger SetupLogging(string otlpEndpoint)
+        public static ILogger SetupLogging(string serviceName, string otlpEndpoint)
         {
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
                 .Enrich.WithEnvironmentName()
                 .Enrich.WithMachineName()
+                .Enrich.WithProperty("service.name", serviceName)
                 .WriteTo.OpenTelemetry()
                 .CreateLogger();
 
