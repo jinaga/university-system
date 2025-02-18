@@ -51,6 +51,18 @@ This will build the University.Importer and University.Indexer Docker images and
 
 If you make any changes to source code, please remember to run `docker compose build`. Then use `docker compose down` and `docker compose up` to create new containers for those rebuilt images.
 
+### Running the Demo
+
+The demo shows two processes communicating via a replicator. One process is the importer, which reads course data from a CSV file and writes it to the replicator. The other process is the indexer, which receives course data from the replicator and writes it to Elasticsearch.
+
+1. Open a web browser and navigate to `http://localhost:9200/_cat/indices?v` to view the Elasticsearch indices. You should see an index named `offerings`.
+2. Open a web browser and navigate to `http://localhost:9200/offerings/_search` to view the offerings in the index. At first, you will see an empty list.
+3. Expand the `data` directory in Visual Studio Code, and then the `mesh`, `data`, and subdirectories. You will see the `university_data.csv` file.
+4. Drag the `university_data.csv` file from `data` to `import`. It will be imported and moved to the `processed` directory.
+5. Refresh the Elasticsearch index page. You should see the offerings in the index.
+
+Use Jaeger, Grafana, and Prometheus to view traces, logs, and metrics.
+
 ### Environment Variables
 
 The University.Importer service uses the following environment variables:
