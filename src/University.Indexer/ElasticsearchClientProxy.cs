@@ -1,13 +1,16 @@
 using Nest;
+using Serilog;
 
 namespace University.Indexer
 {
     public class ElasticsearchClientProxy
     {
         private readonly ElasticClient client;
+        private readonly ILogger _logger;
 
-        public ElasticsearchClientProxy(string elasticsearchUrl)
+        public ElasticsearchClientProxy(string elasticsearchUrl, ILogger logger)
         {
+            _logger = logger;
             var settings = new ConnectionSettings(new Uri(elasticsearchUrl))
                 .DefaultIndex("offerings");
             client = new ElasticClient(settings);
@@ -70,7 +73,7 @@ namespace University.Indexer
             });
             if (!success)
             {
-                Console.WriteLine($"Failed to index {searchRecord.CourseCode} {searchRecord.CourseName}");
+                _logger.Error("Failed to index course {CourseCode} {CourseName}", searchRecord.CourseCode, searchRecord.CourseName);
             }
             return success;
         }
@@ -91,7 +94,7 @@ namespace University.Indexer
             });
             if (!success)
             {
-                Console.WriteLine($"Failed to update {id}");
+                _logger.Error("Failed to update time for course {Id}", id);
             }
             return success;
         }
@@ -111,7 +114,7 @@ namespace University.Indexer
             });
             if (!success)
             {
-                Console.WriteLine($"Failed to update location for {id}");
+                _logger.Error("Failed to update location for course {Id}", id);
             }
             return success;
         }
@@ -131,7 +134,7 @@ namespace University.Indexer
             });
             if (!success)
             {
-                Console.WriteLine($"Failed to update instructor for {id}");
+                _logger.Error("Failed to update instructor for course {Id}", id);
             }
             return success;
         }

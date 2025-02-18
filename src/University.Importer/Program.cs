@@ -1,4 +1,4 @@
-﻿﻿using University.Importer;
+﻿﻿﻿﻿using University.Importer;
 using Serilog;
 using University.Common;
 using System.Diagnostics.Metrics;
@@ -58,7 +58,7 @@ try
         var university = await UniversityDataSeeder.SeedData(j, ENVIRONMENT_PUBLIC_KEY);
 
         var meter = new Meter("University.Importer", "1.0.0");
-        var watcher = new CsvFileWatcher(j, university, IMPORT_DATA_PATH, PROCESSED_DATA_PATH, ERROR_DATA_PATH, meter);
+        var watcher = new CsvFileWatcher(j, university, IMPORT_DATA_PATH, PROCESSED_DATA_PATH, ERROR_DATA_PATH, meter, logger);
         watcher.StartWatching();
 
         return async () =>

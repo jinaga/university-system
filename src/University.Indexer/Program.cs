@@ -48,7 +48,7 @@ var consoleApp = new ConsoleApplication(logger, tracerProvider);
 
 await consoleApp.RunAsync(async () =>
 {
-    var elasticsearchClient = new ElasticsearchClientProxy(ELASTICSEARCH_URL);
+    var elasticsearchClient = new ElasticsearchClientProxy(ELASTICSEARCH_URL, logger);
 
     await elasticsearchClient.Initialize();
 

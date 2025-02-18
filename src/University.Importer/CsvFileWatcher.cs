@@ -1,13 +1,11 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Diagnostics.Metrics;
-
 using CsvHelper;
-
 using Jinaga;
 using Jinaga.Extensions;
-
 using University.Model;
+using Serilog;
 
 namespace University.Importer
 {
@@ -19,13 +17,12 @@ namespace University.Importer
         private readonly string _processedDataPath;
         private readonly string _errorDataPath;
         private readonly ActivitySource _activitySource = new ActivitySource("University.Importer");
-
+        private readonly ILogger _logger;
         private FileSystemWatcher? _watcher = null;
-
         private readonly Counter<long> _filesProcessed;
         private readonly Counter<long> _rowsProcessed;
 
-        public CsvFileWatcher(JinagaClient j, Organization university, string importDataPath, string processedDataPath, string errorDataPath, Meter meter)
+        public CsvFileWatcher(JinagaClient j, Organization university, string importDataPath, string processedDataPath, string errorDataPath, Meter meter, ILogger logger)
         {
             _j = j;
             _university = university;
@@ -34,6 +31,7 @@ namespace University.Importer
             _errorDataPath = errorDataPath;
             _filesProcessed = meter.CreateCounter<long>("files_processed");
             _rowsProcessed = meter.CreateCounter<long>("rows_processed");
+            _logger = logger;
         }
 
         public void StartWatching()
@@ -127,7 +125,7 @@ namespace University.Importer
                 await _j.Fact(new OfferingInstructor(offering, instructor, instructors.ToArray()));
             }
 
-            Console.WriteLine($"Imported {record.CourseCode} {record.CourseName}");
+            _logger.Information("Imported course {CourseCode} {CourseName}", record.CourseCode, record.CourseName);
         }
 
         private void MoveFileToProcessed(string filePath)
@@ -138,7 +136,7 @@ namespace University.Importer
 
         private void LogError(Exception ex, string filePath)
         {
-            Console.WriteLine($"Error processing file {filePath}: {ex.Message}");
+            _logger.Error(ex, "Error processing file {FilePath}", filePath);
         }
 
         private void MoveFileToError(string filePath)
