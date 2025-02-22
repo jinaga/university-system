@@ -5,7 +5,6 @@ using University.Model;
 using University.Common;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using Jinaga.Store.SQLite;
 
 var REPLICATOR_URL = Environment.GetEnvironmentVariable("REPLICATOR_URL");
 var ENVIRONMENT_PUBLIC_KEY = Environment.GetEnvironmentVariable("ENVIRONMENT_PUBLIC_KEY");
@@ -53,15 +52,7 @@ await consoleApp.RunAsync(async () =>
 
     await elasticsearchClient.Initialize();
 
-    var j = JinagaSQLiteClient.Create(options =>
-    {
-        options.HttpEndpoint = new Uri(REPLICATOR_URL);
-        options.SQLitePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "data",
-            "University.Indexer",
-            "jinaga.db");
-    });
+    var j = JinagaClientFactory.CreateClient(REPLICATOR_URL);
 
     var creator = await j.Fact(new User(ENVIRONMENT_PUBLIC_KEY));
     var university = await j.Fact(new Organization(creator, "6003"));
