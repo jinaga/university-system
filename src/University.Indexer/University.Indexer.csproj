@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Jinaga.Store.SQLite" Version="1.1.4" />
     <PackageReference Include="NEST" Version="6.8.11" />
   </ItemGroup>
 
