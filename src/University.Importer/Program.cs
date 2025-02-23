@@ -59,12 +59,14 @@ try
         var university = await UniversityDataSeeder.SeedData(j, ENVIRONMENT_PUBLIC_KEY);
 
         var meter = new Meter("University.Importer", "1.0.0");
-        var watcher = new CsvFileWatcher(j, university, IMPORT_DATA_PATH, PROCESSED_DATA_PATH, ERROR_DATA_PATH, meter, logger);
-        watcher.StartWatching();
+
+        var serviceRunner = new ServiceRunner(logger)
+            .WithService(new CsvFileWatcher(j, university, IMPORT_DATA_PATH, PROCESSED_DATA_PATH, ERROR_DATA_PATH, meter, logger));
+        await serviceRunner.Start();
 
         return async () =>
         {
-            watcher.StopWatching();
+            await serviceRunner.Stop();
             await j.DisposeAsync();
         };
     });

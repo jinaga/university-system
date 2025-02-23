@@ -1,6 +1,7 @@
 using Jinaga;
 using Jinaga.Extensions;
 using System.Diagnostics.Metrics;
+using University.Common;
 using University.Model;
 using ILogger = Serilog.ILogger;
 

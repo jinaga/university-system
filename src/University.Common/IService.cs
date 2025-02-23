@@ -1,4 +1,4 @@
-namespace University.Indexer.Services;
+namespace University.Common;
 
 public interface IService
 {

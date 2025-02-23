@@ -1,11 +1,14 @@
-﻿﻿using Jinaga;
+﻿﻿using System.Diagnostics;
+using System.Diagnostics.Metrics;
+
+using Jinaga;
+
+using Serilog;
+
+using University.Common;
 using University.Indexer;
 using University.Indexer.Services;
 using University.Model;
-using University.Common;
-using System.Diagnostics;
-using System.Diagnostics.Metrics;
-using Serilog;
 
 var REPLICATOR_URL = Environment.GetEnvironmentVariable("REPLICATOR_URL");
 var ENVIRONMENT_PUBLIC_KEY = Environment.GetEnvironmentVariable("ENVIRONMENT_PUBLIC_KEY");
@@ -62,27 +65,16 @@ try
         var university = await j.Fact(new Organization(creator, "6003"));
         var currentSemester = await j.Fact(new Semester(university, 2022, "Spring"));
     
-        var services = new List<IService>
-        {
-            new OfferIndexService(j, elasticsearchClient, logger, offeringsIndexedCounter, currentSemester),
-            new OfferTimeUpdateService(j, elasticsearchClient, logger, offeringsUpdatedCounter, currentSemester),
-            new OfferLocationUpdateService(j, elasticsearchClient, logger, offeringsUpdatedCounter, currentSemester),
-            new OfferInstructorUpdateService(j, elasticsearchClient, logger, offeringsUpdatedCounter, currentSemester)
-        };
-    
-        // Start all services
-        foreach (var service in services)
-        {
-            await service.Start();
-        }
+        var serviceRunner = new ServiceRunner(logger)
+            .WithService(new OfferIndexService(j, elasticsearchClient, logger, offeringsIndexedCounter, currentSemester))
+            .WithService(new OfferTimeUpdateService(j, elasticsearchClient, logger, offeringsUpdatedCounter, currentSemester))
+            .WithService(new OfferLocationUpdateService(j, elasticsearchClient, logger, offeringsUpdatedCounter, currentSemester))
+            .WithService(new OfferInstructorUpdateService(j, elasticsearchClient, logger, offeringsUpdatedCounter, currentSemester));
+        await serviceRunner.Start();
     
         return async () =>
         {
-            // Stop all services
-            foreach (var service in services)
-            {
-                await service.Stop();
-            }
+            await serviceRunner.Stop();
             await j.DisposeAsync();
             logger.Information("Stopped indexing course offerings.");
         };

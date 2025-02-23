@@ -1,15 +1,20 @@
 using System.Diagnostics;
-using System.Globalization;
 using System.Diagnostics.Metrics;
+using System.Globalization;
+
 using CsvHelper;
+
 using Jinaga;
 using Jinaga.Extensions;
-using University.Model;
+
 using Serilog;
+
+using University.Common;
+using University.Model;
 
 namespace University.Importer
 {
-    public class CsvFileWatcher
+    public class CsvFileWatcher : IService
     {
         private readonly JinagaClient _j;
         private readonly Organization _university;
@@ -34,31 +39,31 @@ namespace University.Importer
             _logger = logger;
         }
 
-        public void StartWatching()
-        {
-            if (_watcher != null)
-            {
-                return;
-            }
-            _watcher = new FileSystemWatcher
-            {
-                Path = _importDataPath,
-                Filter = "*.csv",
-                NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
-            };
-
-            _watcher.Created += OnNewFile;
-            _watcher.EnableRaisingEvents = true;
-        }
-
-        public void StopWatching()
+        public Task Start()
         {
             if (_watcher == null)
             {
-                return;
+                _watcher = new FileSystemWatcher
+                {
+                    Path = _importDataPath,
+                    Filter = "*.csv",
+                    NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
+                };
+
+                _watcher.Created += OnNewFile;
+                _watcher.EnableRaisingEvents = true;
             }
-            _watcher.EnableRaisingEvents = false;
-            _watcher.Dispose();
+            return Task.CompletedTask;
+        }
+
+        public Task Stop()
+        {
+            if (_watcher != null)
+            {
+                _watcher.EnableRaisingEvents = false;
+                _watcher.Dispose();
+            }
+            return Task.CompletedTask;
         }
 
         private void OnNewFile(object source, FileSystemEventArgs e)
