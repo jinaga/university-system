@@ -31,6 +31,8 @@ services:
       - ./policies:/var/lib/replicator/policies:ro
       - ./authentication:/var/lib/replicator/authentication:ro
       - ./subscriptions:/var/lib/replicator/subscriptions:ro
+    depends_on:
+      - otel-collector
 
   importer:
     build:
