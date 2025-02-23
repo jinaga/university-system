@@ -64,9 +64,7 @@ public class OfferTimeUpdateService : IService
             if (indexed)
             {
                 await jinagaClient.Fact(new SearchIndexRecordTimeUpdate(record, time));
-                offeringsUpdatedCounter.Add(1,
-                    new KeyValuePair<string, object?>("courseCode", record.offering.course.code),
-                    new KeyValuePair<string, object?>("courseName", record.offering.course.name));
+                offeringsUpdatedCounter.Add(1);
                 logger.Information("Updated time of {CourseCode} {CourseName}", record.offering.course.code, record.offering.course.name);
             }
         });

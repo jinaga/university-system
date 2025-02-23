@@ -66,9 +66,7 @@ public class OfferInstructorUpdateService : IService
             if (indexed)
             {
                 await jinagaClient.Fact(new SearchIndexRecordInstructorUpdate(record, offeringInstructor));
-                offeringsUpdatedCounter.Add(1,
-                    new KeyValuePair<string, object?>("courseCode", record.offering.course.code),
-                    new KeyValuePair<string, object?>("courseName", record.offering.course.name));
+                offeringsUpdatedCounter.Add(1);
                 logger.Information("Updated instructor of {CourseCode} {CourseName}", record.offering.course.code, record.offering.course.name);
             }
         });

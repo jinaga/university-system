@@ -62,9 +62,7 @@ public class OfferIndexService : IService
             if (indexed)
             {
                 await jinagaClient.Fact(new SearchIndexRecord(offering, recordId));
-                offeringsIndexedCounter.Add(1,
-                    new KeyValuePair<string, object?>("courseCode", offering.course.code),
-                    new KeyValuePair<string, object?>("courseName", offering.course.name));
+                offeringsIndexedCounter.Add(1);
                 logger.Information("Indexed course {CourseCode} {CourseName}", offering.course.code, offering.course.name);
             }
         });
