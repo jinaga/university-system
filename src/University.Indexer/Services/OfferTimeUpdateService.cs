@@ -1,6 +1,7 @@
 using Jinaga;
 using Jinaga.Extensions;
 using System.Diagnostics.Metrics;
+using System.Diagnostics;
 using University.Common;
 using University.Model;
 using ILogger = Serilog.ILogger;
@@ -14,6 +15,7 @@ public class OfferTimeUpdateService : IService
     private readonly ILogger logger;
     private readonly Counter<long> offeringsUpdatedCounter;
     private readonly Semester currentSemester;
+    private readonly ActivitySource activitySource = new ActivitySource("University.Indexer");
     private dynamic? subscription;
 
     public OfferTimeUpdateService(
@@ -51,6 +53,10 @@ public class OfferTimeUpdateService : IService
 
         subscription = jinagaClient.Subscribe(offeringsToUpdateTime, currentSemester, async update =>
         {
+            using var activity = activitySource.StartActivity("UpdateOfferingTime");
+            activity?.SetTag("courseCode", update.record.offering.course.code);
+            activity?.SetTag("courseName", update.record.offering.course.name);
+
             var record = update.record;
             var time = update.time;
             bool indexed = await elasticsearchClient.UpdateRecordTime(record.recordId, time.days, time.time);

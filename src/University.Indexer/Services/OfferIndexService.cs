@@ -4,6 +4,7 @@ using System.Diagnostics.Metrics;
 using University.Common;
 using University.Model;
 using ILogger = Serilog.ILogger;
+using System.Diagnostics;
 
 namespace University.Indexer.Services;
 
@@ -14,6 +15,7 @@ public class OfferIndexService : IService
     private readonly ILogger logger;
     private readonly Counter<long> offeringsIndexedCounter;
     private readonly Semester currentSemester;
+    private readonly ActivitySource activitySource = new ActivitySource("University.Indexer");
     private dynamic? subscription;
 
     public OfferIndexService(
@@ -40,6 +42,10 @@ public class OfferIndexService : IService
 
         subscription = jinagaClient.Subscribe(offeringsToIndex, currentSemester, async offering =>
         {
+            using var activity = activitySource.StartActivity("IndexOffering");
+            activity?.SetTag("courseCode", offering.course.code);
+            activity?.SetTag("courseName", offering.course.name);
+
             var recordId = jinagaClient.Hash(offering).Replace('+', '-').Replace('/', '_').TrimEnd('=');
             var searchRecord = new SearchRecord
             {
