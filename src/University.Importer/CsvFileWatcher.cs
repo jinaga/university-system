@@ -73,7 +73,7 @@ namespace University.Importer
 
         private async Task ImportCsvFile(string filePath)
         {
-            _filesProcessed.Add(1, new KeyValuePair<string, object?>("file", Path.GetFileName(filePath)));
+            _filesProcessed.Add(1);
             try
             {
                 using var reader = new StreamReader(filePath);
@@ -96,9 +96,7 @@ namespace University.Importer
 
         private async Task CreateFacts(CourseRecord record)
         {
-            _rowsProcessed.Add(1,
-                new KeyValuePair<string, object?>("courseCode", Path.GetFileName(record.CourseCode)),
-                new KeyValuePair<string, object?>("courseName", Path.GetFileName(record.CourseName)));
+            _rowsProcessed.Add(1);
 
             using var activity = _activitySource.StartActivity("CreateFacts");
             activity?.SetTag("courseCode", record.CourseCode);
