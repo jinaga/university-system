@@ -65,7 +65,7 @@ This project uses OpenTelemetry for collecting telemetry data and Jaeger for vis
 
 ### Viewing Logs in Grafana
 
-After starting the services with `docker compose up`, follow these steps to view the logs:
+After starting the services with `docker compose up -v --build`, follow these steps to view the logs:
 
 1. Access Grafana:
    - Open a web browser and navigate to `http://localhost:3000`
@@ -85,13 +85,11 @@ After starting the services with `docker compose up`, follow these steps to view
      * Leave other settings at their defaults
    - Click "Save & test" to verify the connection
 
-3. View and Query Logs:
-   - Click on "Explore" in the left sidebar
-   - Select "Loki" as the data source
-   - Use LogQL queries to filter and view logs:
-     * `{container="university-mesh-importer-1"}` - View Importer service logs
-     * `{container="university-mesh-indexer-1"}` - View Indexer service logs
-   - Click "Run query" to see the results
+3. View Logs:
+   - Expand the "Explore" menu in the left sidebar
+   - Click on "Logs" under "Explore"
+   - Select "Loki" as the data source if it is not already selected
+   - View the logs by service
 
 ### Viewing metrics in Prometheus
 
@@ -103,15 +101,23 @@ After starting the services with `docker compose up`, follow these steps to view
 Use the following queries to check throughput:
 - Files processed by the Importer:
   ```prometheus
-  sum(increase(files_processed_total[5m]))
+  files_processed_total
   ```
 - Rows processed by the Importer:
   ```prometheus
-  sum(increase(rows_processed_total[5m]))
+  rows_processed_total
   ```
 - Offerings indexed by the Indexer:
   ```prometheus
-  sum(increase(offerings_indexed_total[5m]))
+  offerings_indexed_total
+  ```
+- Facts saved by the Replicator:
+  ```prometheus
+  facts_saved_total
+  ```
+- Facts loaded by the Replicator:
+  ```prometheus
+  facts_loaded_total
   ```
 
 These queries show how many files, rows, and offerings have been processed in the last five minutes, helping you monitor the system's throughput.

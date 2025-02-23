@@ -20,7 +20,7 @@ services:
       - esdata:/usr/share/elasticsearch/data
 
   back-end-replicator:
-    image: jinaga/jinaga-replicator:3.3.8
+    image: jinaga/jinaga-replicator:3.4.0
     container_name: back-end-replicator
     ports:
       - "8080:8080"
