@@ -5,6 +5,7 @@ using University.Model;
 using University.Common;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using Serilog;
 
 var REPLICATOR_URL = Environment.GetEnvironmentVariable("REPLICATOR_URL");
 var ENVIRONMENT_PUBLIC_KEY = Environment.GetEnvironmentVariable("ENVIRONMENT_PUBLIC_KEY");
@@ -32,54 +33,68 @@ if (REPLICATOR_URL == null || ENVIRONMENT_PUBLIC_KEY == null || ELASTICSEARCH_UR
     return;
 }
 
-using var tracerProvider = Telemetry.SetupTracing("University.Indexer", OTEL_EXPORTER_OTLP_ENDPOINT);
 var logger = Telemetry.SetupLogging("University.Indexer", OTEL_EXPORTER_OTLP_ENDPOINT);
-var activitySource = new ActivitySource("University.Indexer");
 
-using var meterProvider = Telemetry.SetupMetrics("University.Indexer", OTEL_EXPORTER_OTLP_ENDPOINT);
-
-var meter = new Meter("University.Indexer", "1.0.0");
-var offeringsIndexedCounter = meter.CreateCounter<long>("offerings_indexed");
-var offeringsUpdatedCounter = meter.CreateCounter<long>("offerings_updated");
-
-logger.Information("Starting University.Indexer...");
-
-var consoleApp = new ConsoleApplication(logger, tracerProvider);
-
-await consoleApp.RunAsync(async () =>
+try
 {
-    var elasticsearchClient = new ElasticsearchClientProxy(ELASTICSEARCH_URL, logger);
-
-    await elasticsearchClient.Initialize();
-
-    var j = JinagaClientFactory.CreateClient(REPLICATOR_URL);
-
-    var creator = await j.Fact(new User(ENVIRONMENT_PUBLIC_KEY));
-    var university = await j.Fact(new Organization(creator, "6003"));
-    var currentSemester = await j.Fact(new Semester(university, 2022, "Spring"));
-
-    var services = new List<IService>
+    using var tracerProvider = Telemetry.SetupTracing("University.Indexer", OTEL_EXPORTER_OTLP_ENDPOINT);
+    var activitySource = new ActivitySource("University.Indexer");
+    
+    using var meterProvider = Telemetry.SetupMetrics("University.Indexer", OTEL_EXPORTER_OTLP_ENDPOINT);
+    
+    var meter = new Meter("University.Indexer", "1.0.0");
+    var offeringsIndexedCounter = meter.CreateCounter<long>("offerings_indexed");
+    var offeringsUpdatedCounter = meter.CreateCounter<long>("offerings_updated");
+    
+    logger.Information("Starting University.Indexer...");
+    
+    var consoleApp = new ConsoleApplication(logger, tracerProvider);
+    
+    await consoleApp.RunAsync(async () =>
     {
-        new OfferIndexService(j, elasticsearchClient, logger, offeringsIndexedCounter, currentSemester),
-        new OfferTimeUpdateService(j, elasticsearchClient, logger, offeringsUpdatedCounter, currentSemester),
-        new OfferLocationUpdateService(j, elasticsearchClient, logger, offeringsUpdatedCounter, currentSemester),
-        new OfferInstructorUpdateService(j, elasticsearchClient, logger, offeringsUpdatedCounter, currentSemester)
-    };
-
-    // Start all services
-    foreach (var service in services)
-    {
-        await service.Start();
-    }
-
-    return async () =>
-    {
-        // Stop all services
+        var elasticsearchClient = new ElasticsearchClientProxy(ELASTICSEARCH_URL, logger);
+    
+        await elasticsearchClient.Initialize();
+    
+        var j = JinagaClientFactory.CreateClient(REPLICATOR_URL);
+    
+        var creator = await j.Fact(new User(ENVIRONMENT_PUBLIC_KEY));
+        var university = await j.Fact(new Organization(creator, "6003"));
+        var currentSemester = await j.Fact(new Semester(university, 2022, "Spring"));
+    
+        var services = new List<IService>
+        {
+            new OfferIndexService(j, elasticsearchClient, logger, offeringsIndexedCounter, currentSemester),
+            new OfferTimeUpdateService(j, elasticsearchClient, logger, offeringsUpdatedCounter, currentSemester),
+            new OfferLocationUpdateService(j, elasticsearchClient, logger, offeringsUpdatedCounter, currentSemester),
+            new OfferInstructorUpdateService(j, elasticsearchClient, logger, offeringsUpdatedCounter, currentSemester)
+        };
+    
+        // Start all services
         foreach (var service in services)
         {
-            await service.Stop();
+            await service.Start();
         }
-        await j.DisposeAsync();
-        logger.Information("Stopped indexing course offerings.");
-    };
-});
+    
+        return async () =>
+        {
+            // Stop all services
+            foreach (var service in services)
+            {
+                await service.Stop();
+            }
+            await j.DisposeAsync();
+            logger.Information("Stopped indexing course offerings.");
+        };
+    });
+    
+}
+catch (Exception ex)
+{
+    logger.Error(ex, "An error occurred while running the indexer");
+    throw;
+}
+finally
+{
+    Log.CloseAndFlush();
+}

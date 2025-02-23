@@ -39,12 +39,13 @@ if (REPLICATOR_URL == null || ENVIRONMENT_PUBLIC_KEY == null || IMPORT_DATA_PATH
     return;
 }
 
-using var tracerProvider = Telemetry.SetupTracing("University.Importer", OTEL_EXPORTER_OTLP_ENDPOINT);
 var logger = Telemetry.SetupLogging("University.Importer", OTEL_EXPORTER_OTLP_ENDPOINT);
-using var meterProvider = Telemetry.SetupMetrics("University.Importer", OTEL_EXPORTER_OTLP_ENDPOINT);
 
 try
 {
+    using var tracerProvider = Telemetry.SetupTracing("University.Importer", OTEL_EXPORTER_OTLP_ENDPOINT);
+    using var meterProvider = Telemetry.SetupMetrics("University.Importer", OTEL_EXPORTER_OTLP_ENDPOINT);
+
     logger.Information("Starting University.Importer...");
 
     var consoleApp = new ConsoleApplication(logger, tracerProvider);
