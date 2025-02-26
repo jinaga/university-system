@@ -1,7 +1,7 @@
 using Jinaga;
 using Jinaga.Store.SQLite;
 
-namespace University.Importer
+namespace University.Indexer
 {
     public static class JinagaClientFactory
     {
@@ -13,7 +13,7 @@ namespace University.Importer
                 options.SQLitePath = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                     "data",
-                    "University.Importer",
+                    "University.Indexer",
                     "jinaga.db");
             });
         }

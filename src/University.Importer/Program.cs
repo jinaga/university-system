@@ -39,12 +39,13 @@ if (REPLICATOR_URL == null || ENVIRONMENT_PUBLIC_KEY == null || IMPORT_DATA_PATH
     return;
 }
 
-using var tracerProvider = Telemetry.SetupTracing("University.Importer", OTEL_EXPORTER_OTLP_ENDPOINT);
-var logger = Telemetry.SetupLogging(OTEL_EXPORTER_OTLP_ENDPOINT);
-using var meterProvider = Telemetry.SetupMetrics("University.Importer", OTEL_EXPORTER_OTLP_ENDPOINT);
+var logger = Telemetry.SetupLogging("University.Importer", OTEL_EXPORTER_OTLP_ENDPOINT);
 
 try
 {
+    using var tracerProvider = Telemetry.SetupTracing("University.Importer", OTEL_EXPORTER_OTLP_ENDPOINT);
+    using var meterProvider = Telemetry.SetupMetrics("University.Importer", OTEL_EXPORTER_OTLP_ENDPOINT);
+
     logger.Information("Starting University.Importer...");
 
     var consoleApp = new ConsoleApplication(logger, tracerProvider);
@@ -58,12 +59,14 @@ try
         var university = await UniversityDataSeeder.SeedData(j, ENVIRONMENT_PUBLIC_KEY);
 
         var meter = new Meter("University.Importer", "1.0.0");
-        var watcher = new CsvFileWatcher(j, university, IMPORT_DATA_PATH, PROCESSED_DATA_PATH, ERROR_DATA_PATH, meter);
-        watcher.StartWatching();
+
+        var serviceRunner = new ServiceRunner(logger)
+            .WithService(new CsvFileWatcher(j, university, IMPORT_DATA_PATH, PROCESSED_DATA_PATH, ERROR_DATA_PATH, meter, logger));
+        await serviceRunner.Start();
 
         return async () =>
         {
-            watcher.StopWatching();
+            await serviceRunner.Stop();
             await j.DisposeAsync();
         };
     });

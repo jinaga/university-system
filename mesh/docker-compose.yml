@@ -9,6 +9,7 @@ services:
       - discovery.type=single-node
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - bootstrap.system_call_filter=false
     ulimits:
       memlock:
         soft: -1
@@ -19,14 +20,19 @@ services:
       - esdata:/usr/share/elasticsearch/data
 
   back-end-replicator:
-    image: jinaga/jinaga-replicator:latest
+    image: jinaga/jinaga-replicator:3.4.0
     container_name: back-end-replicator
     ports:
       - "8080:8080"
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_SERVICE_NAME=back-end-replicator
     volumes:
       - ./policies:/var/lib/replicator/policies:ro
       - ./authentication:/var/lib/replicator/authentication:ro
       - ./subscriptions:/var/lib/replicator/subscriptions:ro
+    depends_on:
+      - otel-collector
 
   importer:
     build:
@@ -62,7 +68,7 @@ services:
       - otel-collector
 
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
+    image: otel/opentelemetry-collector-contrib:0.120.0
     container_name: otel-collector
     ports:
       - "4317:4317" # OTLP gRPC
@@ -76,13 +82,13 @@ services:
     command: ["--config=/etc/otel/otel-collector-config.yml"]
 
   jaeger:
-    image: jaegertracing/all-in-one:latest
+    image: jaegertracing/all-in-one:1.66.0
     container_name: jaeger
     ports:
       - "16686:16686" # Jaeger UI
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.2.0
     container_name: prometheus
     ports:
       - "9090:9090"
@@ -96,7 +102,7 @@ services:
       - '--web.console.templates=/usr/share/prometheus/consoles'
 
   loki:
-    image: grafana/loki:latest
+    image: grafana/loki:3.4.2
     container_name: loki
     ports:
       - "3100:3100"
@@ -106,7 +112,7 @@ services:
       - ./loki:/etc/loki:ro
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:11.5.2
     container_name: grafana
     ports:
       - "3000:3000"

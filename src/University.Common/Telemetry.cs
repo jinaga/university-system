@@ -20,13 +20,23 @@ namespace University.Common
                 .Build();
         }
 
-        public static ILogger SetupLogging(string otlpEndpoint)
+        public static Serilog.ILogger SetupLogging(string serviceName, string otlpEndpoint)
         {
+            var resourceBuilder = ResourceBuilder.CreateDefault().AddService(serviceName);
+            
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
                 .Enrich.WithEnvironmentName()
                 .Enrich.WithMachineName()
-                .WriteTo.OpenTelemetry()
+                .WriteTo.OpenTelemetry(configure: options =>
+                {
+                    options.Endpoint = otlpEndpoint;
+                    options.Protocol = Serilog.Sinks.OpenTelemetry.OtlpProtocol.Grpc;
+                    options.ResourceAttributes = new Dictionary<string, object>
+                    {
+                        ["service.name"] = serviceName
+                    };
+                })
                 .CreateLogger();
 
             return Log.Logger;

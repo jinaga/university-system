@@ -1,17 +1,20 @@
 using System.Diagnostics;
-using System.Globalization;
 using System.Diagnostics.Metrics;
+using System.Globalization;
 
 using CsvHelper;
 
 using Jinaga;
 using Jinaga.Extensions;
 
+using Serilog;
+
+using University.Common;
 using University.Model;
 
 namespace University.Importer
 {
-    public class CsvFileWatcher
+    public class CsvFileWatcher : IService
     {
         private readonly JinagaClient _j;
         private readonly Organization _university;
@@ -19,13 +22,12 @@ namespace University.Importer
         private readonly string _processedDataPath;
         private readonly string _errorDataPath;
         private readonly ActivitySource _activitySource = new ActivitySource("University.Importer");
-
+        private readonly ILogger _logger;
         private FileSystemWatcher? _watcher = null;
-
         private readonly Counter<long> _filesProcessed;
         private readonly Counter<long> _rowsProcessed;
 
-        public CsvFileWatcher(JinagaClient j, Organization university, string importDataPath, string processedDataPath, string errorDataPath, Meter meter)
+        public CsvFileWatcher(JinagaClient j, Organization university, string importDataPath, string processedDataPath, string errorDataPath, Meter meter, ILogger logger)
         {
             _j = j;
             _university = university;
@@ -34,33 +36,34 @@ namespace University.Importer
             _errorDataPath = errorDataPath;
             _filesProcessed = meter.CreateCounter<long>("files_processed");
             _rowsProcessed = meter.CreateCounter<long>("rows_processed");
+            _logger = logger;
         }
 
-        public void StartWatching()
-        {
-            if (_watcher != null)
-            {
-                return;
-            }
-            _watcher = new FileSystemWatcher
-            {
-                Path = _importDataPath,
-                Filter = "*.csv",
-                NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
-            };
-
-            _watcher.Created += OnNewFile;
-            _watcher.EnableRaisingEvents = true;
-        }
-
-        public void StopWatching()
+        public Task Start()
         {
             if (_watcher == null)
             {
-                return;
+                _watcher = new FileSystemWatcher
+                {
+                    Path = _importDataPath,
+                    Filter = "*.csv",
+                    NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
+                };
+
+                _watcher.Created += OnNewFile;
+                _watcher.EnableRaisingEvents = true;
             }
-            _watcher.EnableRaisingEvents = false;
-            _watcher.Dispose();
+            return Task.CompletedTask;
+        }
+
+        public Task Stop()
+        {
+            if (_watcher != null)
+            {
+                _watcher.EnableRaisingEvents = false;
+                _watcher.Dispose();
+            }
+            return Task.CompletedTask;
         }
 
         private void OnNewFile(object source, FileSystemEventArgs e)
@@ -70,7 +73,7 @@ namespace University.Importer
 
         private async Task ImportCsvFile(string filePath)
         {
-            _filesProcessed.Add(1, new KeyValuePair<string, object?>("file", Path.GetFileName(filePath)));
+            _filesProcessed.Add(1);
             try
             {
                 using var reader = new StreamReader(filePath);
@@ -93,16 +96,14 @@ namespace University.Importer
 
         private async Task CreateFacts(CourseRecord record)
         {
-            _rowsProcessed.Add(1,
-                new KeyValuePair<string, object?>("courseCode", Path.GetFileName(record.CourseCode)),
-                new KeyValuePair<string, object?>("courseName", Path.GetFileName(record.CourseName)));
+            _rowsProcessed.Add(1);
 
             using var activity = _activitySource.StartActivity("CreateFacts");
             activity?.SetTag("courseCode", record.CourseCode);
             activity?.SetTag("courseName", record.CourseName);
 
-            var locationsOfOffering = Given<Offering>.Match(offering => offering.Locations.Select(location => location));
-            var timesOfOffering = Given<Offering>.Match(offering => offering.Times.Select(time => time));
+            var locationsOfOffering = Given<Offering>.Match(offering => offering.Locations);
+            var timesOfOffering = Given<Offering>.Match(offering => offering.Times);
             var instructorsOfOffering = Given<Offering>.Match(offering => offering.Successors().OfType<OfferingInstructor>(instructor => instructor.offering)
                 .WhereNo((OfferingInstructor next) => next.prior));
 
@@ -127,7 +128,7 @@ namespace University.Importer
                 await _j.Fact(new OfferingInstructor(offering, instructor, instructors.ToArray()));
             }
 
-            Console.WriteLine($"Imported {record.CourseCode} {record.CourseName}");
+            _logger.Information("Imported course {CourseCode} {CourseName}", record.CourseCode, record.CourseName);
         }
 
         private void MoveFileToProcessed(string filePath)
@@ -138,7 +139,7 @@ namespace University.Importer
 
         private void LogError(Exception ex, string filePath)
         {
-            Console.WriteLine($"Error processing file {filePath}: {ex.Message}");
+            _logger.Error(ex, "Error processing file {FilePath}", filePath);
         }
 
         private void MoveFileToError(string filePath)
