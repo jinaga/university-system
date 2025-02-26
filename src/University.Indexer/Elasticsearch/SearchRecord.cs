@@ -1,4 +1,4 @@
-namespace University.Indexer;
+namespace University.Indexer.Elasticsearch;
 
 public class SearchRecord
 {
