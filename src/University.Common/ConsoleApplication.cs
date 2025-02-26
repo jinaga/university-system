@@ -1,6 +1,5 @@
 using Serilog;
 using OpenTelemetry.Trace;
-using System.Collections.Immutable;
 
 namespace University.Common
 {
