@@ -10,6 +10,7 @@ namespace University.Indexer.Elasticsearch
         private readonly Lock lockObject = new Lock();
         private readonly ElasticsearchClientProxy elasticsearchClient;
         private Timer? indexTimer;
+        private bool isIndexing = false;
 
         private ImmutableDictionary<string, OfferingIndex> offerings = ImmutableDictionary<string, OfferingIndex>.Empty;
 
@@ -17,47 +18,6 @@ namespace University.Indexer.Elasticsearch
         {
             this.jinagaClient = jinagaClient;
             this.elasticsearchClient = elasticsearchClient;
-        }
-
-        private string ComputeRecordId(object record)
-        {
-            return jinagaClient.Hash(record).Replace('+', '-').Replace('/', '_').TrimEnd('=');
-        }
-
-        private void StartIndexTimer()
-        {
-            if (indexTimer == null)
-            {
-                // Start a timer to index offerings every 5 seconds
-                indexTimer = new Timer(async _ =>
-                {
-                    await IndexOfferings();
-                }, null, 5000, 5000);
-            }
-        }
-
-        private async Task IndexOfferings()
-        {
-            ImmutableDictionary<string, OfferingIndex> currentOfferings;
-            lock (lockObject)
-            {
-                currentOfferings = offerings;
-                // If there are no offerings, stop the timer
-                if (currentOfferings.Count == 0)
-                {
-                    indexTimer?.Dispose();
-                    indexTimer = null;
-                    return;
-                }
-            }
-
-            foreach (var kvp in currentOfferings)
-            {
-                var recordId = kvp.Key;
-                var offering = kvp.Value;
-                var searchRecord = offering.GetSearchRecord(recordId);
-                await elasticsearchClient.IndexRecord(searchRecord);
-            }
         }
 
         public void PushOffering(Offering offering)
@@ -131,6 +91,63 @@ namespace University.Indexer.Elasticsearch
                 offerings = offerings.SetItem(recordId, index);
             }
             StartIndexTimer();
+        }
+
+        private string ComputeRecordId(object record)
+        {
+            return jinagaClient.Hash(record).Replace('+', '-').Replace('/', '_').TrimEnd('=');
+        }
+
+        private void StartIndexTimer()
+        {
+            if (indexTimer == null)
+            {
+                // Start a timer to index offerings every 5 seconds
+                indexTimer = new Timer(async _ =>
+                {
+                    await IndexOfferings();
+                }, null, 5000, 5000);
+            }
+        }
+
+        private async Task IndexOfferings()
+        {
+            ImmutableDictionary<string, OfferingIndex> currentOfferings;
+            lock (lockObject)
+            {
+                if (isIndexing)
+                {
+                    return;
+                }
+                isIndexing = true;
+                currentOfferings = offerings;
+                // If there are no offerings, stop the timer
+                if (currentOfferings.Count == 0)
+                {
+                    indexTimer?.Dispose();
+                    indexTimer = null;
+                    isIndexing = false;
+                    return;
+                }
+            }
+
+            try
+            {
+                foreach (var kvp in currentOfferings)
+                {
+                    var recordId = kvp.Key;
+                    var offering = kvp.Value;
+                    var searchRecord = offering.GetSearchRecord(recordId);
+                    await elasticsearchClient.IndexRecord(searchRecord);
+                }
+            }
+            finally
+            {
+                lock (lockObject)
+                {
+                    isIndexing = false;
+                }
+            }
         }
     }
 }
