@@ -8,17 +8,56 @@ namespace University.Indexer.Elasticsearch
     {
         private readonly JinagaClient jinagaClient;
         private readonly Lock lockObject = new Lock();
+        private readonly ElasticsearchClientProxy elasticsearchClient;
+        private Timer? indexTimer;
 
         private ImmutableDictionary<string, OfferingIndex> offerings = ImmutableDictionary<string, OfferingIndex>.Empty;
 
-        public IndexQueue(JinagaClient jinagaClient)
+        public IndexQueue(JinagaClient jinagaClient, ElasticsearchClientProxy elasticsearchClient)
         {
             this.jinagaClient = jinagaClient;
+            this.elasticsearchClient = elasticsearchClient;
         }
 
         private string ComputeRecordId(object record)
         {
             return jinagaClient.Hash(record).Replace('+', '-').Replace('/', '_').TrimEnd('=');
+        }
+
+        private void StartIndexTimer()
+        {
+            if (indexTimer == null)
+            {
+                // Start a timer to index offerings every 5 seconds
+                indexTimer = new Timer(async _ =>
+                {
+                    await IndexOfferings();
+                }, null, 5000, 5000);
+            }
+        }
+
+        private async Task IndexOfferings()
+        {
+            ImmutableDictionary<string, OfferingIndex> currentOfferings;
+            lock (lockObject)
+            {
+                currentOfferings = offerings;
+                // If there are no offerings, stop the timer
+                if (currentOfferings.Count == 0)
+                {
+                    indexTimer?.Dispose();
+                    indexTimer = null;
+                    return;
+                }
+            }
+
+            foreach (var kvp in currentOfferings)
+            {
+                var recordId = kvp.Key;
+                var offering = kvp.Value;
+                var searchRecord = offering.GetSearchRecord(recordId);
+                await elasticsearchClient.IndexRecord(searchRecord);
+            }
         }
 
         public void PushOffering(Offering offering)
@@ -33,6 +72,7 @@ namespace University.Indexer.Elasticsearch
                 var index = OfferingIndex.Create(offering);
                 offerings = offerings.Add(recordId, index);
             }
+            StartIndexTimer();
         }
 
         public void RemoveOffering(Offering offering)
@@ -60,6 +100,7 @@ namespace University.Indexer.Elasticsearch
                 index = index.WithLocation(location);
                 offerings = offerings.SetItem(recordId, index);
             }
+            StartIndexTimer();
         }
 
         public void PushOfferingTime(OfferingTime time)
@@ -74,6 +115,7 @@ namespace University.Indexer.Elasticsearch
                 index = index.WithTime(time);
                 offerings = offerings.SetItem(recordId, index);
             }
+            StartIndexTimer();
         }
 
         public void PushOfferingInstructor(OfferingInstructor instructor)
@@ -88,6 +130,7 @@ namespace University.Indexer.Elasticsearch
                 index = index.WithInstructor(instructor);
                 offerings = offerings.SetItem(recordId, index);
             }
+            StartIndexTimer();
         }
     }
 }
