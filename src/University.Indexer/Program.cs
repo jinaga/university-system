@@ -69,9 +69,10 @@ try
         var indexQueue = new IndexQueue(j, elasticsearchClient, activitySource, logger, meter);
         var serviceRunner = new ServiceRunner(logger)
             .WithService(new OfferIndexService(j, indexQueue, logger, offeringsIndexedCounter, currentSemester))
-            .WithService(new OfferTimeUpdateService(j, elasticsearchClient, logger, offeringsUpdatedCounter, currentSemester))
-            .WithService(new OfferLocationUpdateService(j, elasticsearchClient, logger, offeringsUpdatedCounter, currentSemester))
-            .WithService(new OfferInstructorUpdateService(j, elasticsearchClient, logger, offeringsUpdatedCounter, currentSemester));
+            // .WithService(new OfferTimeUpdateService(j, elasticsearchClient, logger, offeringsUpdatedCounter, currentSemester))
+            // .WithService(new OfferLocationUpdateService(j, elasticsearchClient, logger, offeringsUpdatedCounter, currentSemester))
+            // .WithService(new OfferInstructorUpdateService(j, elasticsearchClient, logger, offeringsUpdatedCounter, currentSemester))
+            ;
         await serviceRunner.Start();
     
         return async () =>

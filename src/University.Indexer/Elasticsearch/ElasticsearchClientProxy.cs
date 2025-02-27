@@ -99,8 +99,12 @@ public class ElasticsearchClientProxy
         
         var success = await ExecuteWithRetry(async () =>
         {
-            IIndexResponse indexResponse = await client.IndexAsync(searchRecord, i => i.Id(searchRecord.Id));
-            return indexResponse.IsValid;
+            var updateResponse = await client.UpdateAsync<SearchRecord, SearchRecord>(DocumentPath<SearchRecord>.Id(searchRecord.Id), u => u
+                .Index("offerings")
+                .Doc(searchRecord)
+                .DocAsUpsert(true)
+            );
+            return updateResponse.IsValid;
         });
         
         if (!success)
@@ -215,9 +219,10 @@ public class ElasticsearchClientProxy
             // Add each record to the bulk descriptor
             foreach (var record in recordsList)
             {
-                bulkDescriptor.Index<SearchRecord>(i => i
+                bulkDescriptor.Update<SearchRecord>(u => u
                     .Id(record.Id)
-                    .Document(record)
+                    .Doc(record)
+                    .DocAsUpsert(true)
                 );
             }
             
