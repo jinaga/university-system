@@ -1,7 +1,21 @@
 using Nest;
 using Serilog;
+using System.Collections.Generic;
 
 namespace University.Indexer.Elasticsearch;
+
+public class BulkIndexResult
+{
+    public bool IsValid { get; set; }
+    public bool HasErrors { get; set; }
+    public IReadOnlyCollection<BulkError> Errors { get; set; } = Array.Empty<BulkError>();
+}
+
+public class BulkError
+{
+    public string Id { get; set; }
+    public string Error { get; set; }
+}
 
 public class ElasticsearchClientProxy
 {
@@ -137,5 +151,75 @@ public class ElasticsearchClientProxy
             _logger.Error("Failed to update instructor for course {Id}", id);
         }
         return success;
+    }
+
+    /// <summary>
+    /// Indexes multiple search records in a single bulk operation.
+    /// </summary>
+    /// <param name="searchRecords">The collection of search records to index.</param>
+    /// <returns>A result object containing information about the bulk operation.</returns>
+    public async Task<BulkIndexResult> IndexManyRecordsAsync(IEnumerable<SearchRecord> searchRecords)
+    {
+        return await BulkIndexRecordsAsync(searchRecords);
+    }
+
+    /// <summary>
+    /// Indexes multiple search records in a single bulk operation with custom configuration.
+    /// </summary>
+    /// <param name="searchRecords">The collection of search records to index.</param>
+    /// <param name="configureBulk">Optional action to configure the bulk descriptor.</param>
+    /// <returns>A result object containing information about the bulk operation.</returns>
+    public async Task<BulkIndexResult> BulkIndexRecordsAsync(
+        IEnumerable<SearchRecord> searchRecords,
+        Action<BulkDescriptor> configureBulk = null)
+    {
+        var result = await ExecuteWithRetry(async () =>
+        {
+            var bulkDescriptor = new BulkDescriptor().Index("offerings");
+            
+            // Add each record to the bulk descriptor
+            foreach (var record in searchRecords)
+            {
+                bulkDescriptor.Index<SearchRecord>(i => i
+                    .Id(record.Id)
+                    .Document(record)
+                );
+            }
+            
+            // Apply custom configuration if provided
+            configureBulk?.Invoke(bulkDescriptor);
+            
+            // Execute the bulk operation
+            var bulkResponse = await client.BulkAsync(bulkDescriptor);
+            
+            // Create result object
+            var bulkResult = new BulkIndexResult
+            {
+                IsValid = bulkResponse.IsValid,
+                HasErrors = bulkResponse.Errors
+            };
+            
+            // Process errors if any
+            if (bulkResponse.Errors)
+            {
+                var errors = new List<BulkError>();
+                foreach (var itemWithError in bulkResponse.ItemsWithErrors)
+                {
+                    errors.Add(new BulkError
+                    {
+                        Id = itemWithError.Id,
+                        Error = itemWithError.Error?.Reason ?? "Unknown error"
+                    });
+                    
+                    _logger.Error("Failed to index course {Id}: {Error}", 
+                        itemWithError.Id, itemWithError.Error?.Reason);
+                }
+                bulkResult.Errors = errors;
+            }
+            
+            return bulkResult;
+        });
+        
+        return result ?? new BulkIndexResult { IsValid = false, HasErrors = true };
     }
 }

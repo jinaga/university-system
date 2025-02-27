@@ -133,12 +133,17 @@ namespace University.Indexer.Elasticsearch
 
             try
             {
-                foreach (var kvp in currentOfferings)
+                // Convert offerings to search records
+                var searchRecords = currentOfferings.Select(kvp => 
+                    kvp.Value.GetSearchRecord(kvp.Key)).ToList();
+                
+                // Use bulk indexing instead of individual indexing
+                var result = await elasticsearchClient.IndexManyRecordsAsync(searchRecords);
+                
+                // Handle errors if needed
+                if (result.HasErrors)
                 {
-                    var recordId = kvp.Key;
-                    var offering = kvp.Value;
-                    var searchRecord = offering.GetSearchRecord(recordId);
-                    await elasticsearchClient.IndexRecord(searchRecord);
+                    // Errors are already logged in the ElasticsearchClientProxy
                 }
             }
             finally
