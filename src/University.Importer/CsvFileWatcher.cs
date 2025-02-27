@@ -110,7 +110,7 @@ namespace University.Importer
             var course = await _j.Fact(new Course(_university, record.CourseCode, record.CourseName));
             var semester = await _j.Fact(new Semester(_university, record.Year, record.Term));
             var instructor = await _j.Fact(new Instructor(_university, record.Instructor));
-            var offering = await _j.Fact(new Offering(course, semester, record.OfferingGuid));
+            var offering = await _j.Fact(new Offering(course, semester, Guid.NewGuid()));
 
             var locations = await _j.Query(locationsOfOffering, offering);
             var times = await _j.Query(timesOfOffering, offering);

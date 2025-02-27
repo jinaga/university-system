@@ -212,6 +212,33 @@ public class ElasticsearchClientProxy
         
         var stopwatch = Stopwatch.StartNew();
         
+        // Check cluster health before attempting bulk operation
+        var healthResponse = await client.ClusterHealthAsync();
+        if (healthResponse.IsValid)
+        {
+            activity?.SetTag("clusterStatus", healthResponse.Status.ToString());
+            activity?.SetTag("activeShards", healthResponse.ActiveShards);
+            activity?.SetTag("unassignedShards", healthResponse.UnassignedShards);
+            
+            _logger.Debug("Cluster health before bulk operation: Status={Status}, UnassignedShards={UnassignedShards}", 
+                healthResponse.Status, healthResponse.UnassignedShards);
+            
+            // If there are unassigned shards, try to reallocate them
+            if (healthResponse.UnassignedShards > 0)
+            {
+                _logger.Warning("Detected {UnassignedShards} unassigned shards before bulk operation", 
+                    healthResponse.UnassignedShards);
+                await ElasticsearchUtils.ReallocateUnassignedShards(client, _logger);
+            }
+        }
+        
+        // Check if the index is in read-only mode and try to clear it
+        bool readOnlyCleared = await ElasticsearchUtils.CheckAndClearReadOnlyFlag(client, "offerings", _logger);
+        if (!readOnlyCleared)
+        {
+            _logger.Warning("Index may still be in read-only mode. Proceeding with bulk operation anyway...");
+        }
+        
         var result = await ExecuteWithRetry(async () =>
         {
             var bulkDescriptor = new BulkDescriptor().Index("offerings");
@@ -245,14 +272,24 @@ public class ElasticsearchClientProxy
                 var errors = new List<BulkError>();
                 foreach (var itemWithError in bulkResponse.ItemsWithErrors)
                 {
+                    var errorReason = itemWithError.Error?.Reason ?? "Unknown error";
+                    var errorType = itemWithError.Error?.Type ?? "Unknown";
+                    
                     errors.Add(new BulkError
                     {
                         Id = itemWithError.Id,
-                        Error = itemWithError.Error?.Reason ?? "Unknown error"
+                        Error = errorReason
                     });
                     
-                    _logger.Error("Failed to index course {Id}: {Error}", 
-                        itemWithError.Id, itemWithError.Error?.Reason);
+                    _logger.Error("Failed to index course {Id}: {ErrorType} - {ErrorReason}", 
+                        itemWithError.Id, errorType, errorReason);
+                    
+                    // Check for read-only errors specifically
+                    if (errorType == "cluster_block_exception" && errorReason.Contains("read_only"))
+                    {
+                        _logger.Warning("Detected read-only error during bulk operation. Attempting to clear...");
+                        await ElasticsearchUtils.CheckAndClearReadOnlyFlag(client, "offerings", _logger);
+                    }
                 }
                 bulkResult.Errors = errors;
                 
@@ -275,6 +312,10 @@ public class ElasticsearchClientProxy
         {
             _logger.Error("Bulk indexing failed after retries");
             activity?.SetStatus(ActivityStatusCode.Error, "Bulk indexing failed after retries");
+            
+            // As a last resort, try to clear read-only flag and reallocate shards
+            await ElasticsearchUtils.CheckAndClearReadOnlyFlag(client, "offerings", _logger);
+            await ElasticsearchUtils.ReallocateUnassignedShards(client, _logger);
         }
         
         return result ?? new BulkIndexResult { IsValid = false, HasErrors = true };
