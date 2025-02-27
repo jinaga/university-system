@@ -66,8 +66,9 @@ try
         var university = await j.Fact(new Organization(creator, "6003"));
         var currentSemester = await j.Fact(new Semester(university, 2022, "Spring"));
     
+        var indexQueue = new IndexQueue(j, elasticsearchClient, activitySource, logger, meter);
         var serviceRunner = new ServiceRunner(logger)
-            .WithService(new OfferIndexService(j, elasticsearchClient, logger, offeringsIndexedCounter, currentSemester))
+            .WithService(new OfferIndexService(j, indexQueue, logger, offeringsIndexedCounter, currentSemester))
             .WithService(new OfferTimeUpdateService(j, elasticsearchClient, logger, offeringsUpdatedCounter, currentSemester))
             .WithService(new OfferLocationUpdateService(j, elasticsearchClient, logger, offeringsUpdatedCounter, currentSemester))
             .WithService(new OfferInstructorUpdateService(j, elasticsearchClient, logger, offeringsUpdatedCounter, currentSemester));

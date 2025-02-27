@@ -12,7 +12,7 @@ namespace University.Indexer.Services;
 public class OfferIndexService : IService
 {
     private readonly JinagaClient jinagaClient;
-    private readonly ElasticsearchClientProxy elasticsearchClient;
+    private readonly IndexQueue indexQueue;
     private readonly ILogger logger;
     private readonly Counter<long> offeringsIndexedCounter;
     private readonly Semester currentSemester;
@@ -21,13 +21,13 @@ public class OfferIndexService : IService
 
     public OfferIndexService(
         JinagaClient jinagaClient,
-        ElasticsearchClientProxy elasticsearchClient,
+        IndexQueue indexQueue,
         ILogger logger,
         Counter<long> offeringsIndexedCounter,
         Semester currentSemester)
     {
         this.jinagaClient = jinagaClient;
-        this.elasticsearchClient = elasticsearchClient;
+        this.indexQueue = indexQueue;
         this.logger = logger;
         this.offeringsIndexedCounter = offeringsIndexedCounter;
         this.currentSemester = currentSemester;
@@ -35,37 +35,30 @@ public class OfferIndexService : IService
 
     public Task Start()
     {
-        var offeringsToIndex = Given<Semester>.Match(semester =>
+        var offeringsToIndex = Given<Semester>.Match((semester, facts) =>
             from offering in semester.Successors().OfType<Offering>(offering => offering.semester)
             where offering.Successors().No<OfferingDelete>(deleted => deleted.offering)
             where offering.Successors().No<SearchIndexRecord>(record => record.offering)
-            select offering);
+            select new
+            {
+                Offering = offering,
+                Times = facts.Observable(offering.Times),
+                Locations = facts.Observable(offering.Locations),
+                Instructors = facts.Observable(
+                    from offeringInstructor in offering.Successors().OfType<OfferingInstructor>(instructor => instructor.offering)
+                    where offeringInstructor.Successors().No<OfferingInstructor>(next => next.prior)
+                    select offeringInstructor
+                )
+            });
 
-        subscription = jinagaClient.Subscribe(offeringsToIndex, currentSemester, async offering =>
+        subscription = jinagaClient.Subscribe(offeringsToIndex, currentSemester, projection =>
         {
-            using var activity = activitySource.StartActivity("IndexOffering");
-            activity?.SetTag("courseCode", offering.course.code);
-            activity?.SetTag("courseName", offering.course.name);
+            indexQueue.PushOffering(projection.Offering);
+            projection.Times.OnAdded(time => indexQueue.PushOfferingTime(time));
+            projection.Locations.OnAdded(location => indexQueue.PushOfferingLocation(location));
+            projection.Instructors.OnAdded(instructor => indexQueue.PushOfferingInstructor(instructor));
 
-            var recordId = jinagaClient.Hash(offering).Replace('+', '-').Replace('/', '_').TrimEnd('=');
-            var searchRecord = new SearchRecord
-            {
-                Id = recordId,
-                CourseCode = offering.course.code,
-                CourseName = offering.course.name,
-                Days = "TBA",
-                Time = "TBA",
-                Instructor = "TBA",
-                Location = "TBA"
-            };
-            bool indexed = await elasticsearchClient.IndexRecord(searchRecord);
-
-            if (indexed)
-            {
-                await jinagaClient.Fact(new SearchIndexRecord(offering, recordId));
-                offeringsIndexedCounter.Add(1);
-                logger.Information("Indexed course {CourseCode} {CourseName}", offering.course.code, offering.course.name);
-            }
+            return () => indexQueue.RemoveOffering(projection.Offering);
         });
         return Task.CompletedTask;
     }
