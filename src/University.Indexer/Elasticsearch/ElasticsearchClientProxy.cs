@@ -1,6 +1,6 @@
 using Nest;
 using Serilog;
-using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace University.Indexer.Elasticsearch;
 
@@ -21,10 +21,12 @@ public class ElasticsearchClientProxy
 {
     private readonly ElasticClient client;
     private readonly ILogger _logger;
+    private readonly ActivitySource _activitySource;
 
-    public ElasticsearchClientProxy(string elasticsearchUrl, ILogger logger)
+    public ElasticsearchClientProxy(string elasticsearchUrl, ILogger logger, ActivitySource activitySource)
     {
         _logger = logger;
+        _activitySource = activitySource;
         var settings = new ConnectionSettings(new Uri(elasticsearchUrl))
             .DefaultIndex("offerings");
         client = new ElasticClient(settings);
@@ -32,10 +34,15 @@ public class ElasticsearchClientProxy
 
     public async Task Initialize()
     {
+        using var activity = _activitySource.StartActivity("ElasticsearchInitialize");
+        
         // Ensure index exists with proper mappings
         var existsResponse = await client.IndexExistsAsync("offerings");
         if (!existsResponse.Exists)
         {
+            _logger.Information("Creating offerings index in Elasticsearch");
+            activity?.SetTag("creatingIndex", true);
+            
             await client.CreateIndexAsync("offerings", c => c
                 .Mappings(m => m
                     .Map<SearchRecord>(mm => mm
@@ -51,6 +58,12 @@ public class ElasticsearchClientProxy
                     )
                 )
             );
+            _logger.Information("Successfully created offerings index");
+        }
+        else
+        {
+            activity?.SetTag("indexExists", true);
+            _logger.Debug("Offerings index already exists in Elasticsearch");
         }
     }
 
@@ -80,15 +93,26 @@ public class ElasticsearchClientProxy
 
     public async Task<bool> IndexRecord(SearchRecord searchRecord)
     {
+        using var activity = _activitySource.StartActivity("IndexRecord");
+        activity?.SetTag("courseCode", searchRecord.CourseCode);
+        activity?.SetTag("courseName", searchRecord.CourseName);
+        
         var success = await ExecuteWithRetry(async () =>
         {
             IIndexResponse indexResponse = await client.IndexAsync(searchRecord, i => i.Id(searchRecord.Id));
             return indexResponse.IsValid;
         });
+        
         if (!success)
         {
             _logger.Error("Failed to index course {CourseCode} {CourseName}", searchRecord.CourseCode, searchRecord.CourseName);
+            activity?.SetStatus(ActivityStatusCode.Error, $"Failed to index course {searchRecord.CourseCode}");
         }
+        else
+        {
+            _logger.Debug("Successfully indexed course {CourseCode}", searchRecord.CourseCode);
+        }
+        
         return success;
     }
 
@@ -160,7 +184,12 @@ public class ElasticsearchClientProxy
     /// <returns>A result object containing information about the bulk operation.</returns>
     public async Task<BulkIndexResult> IndexManyRecordsAsync(IEnumerable<SearchRecord> searchRecords)
     {
-        return await BulkIndexRecordsAsync(searchRecords);
+        using var activity = _activitySource.StartActivity("IndexManyRecords");
+        var recordsList = searchRecords.ToList();
+        activity?.SetTag("recordCount", recordsList.Count);
+        
+        _logger.Debug("Bulk indexing {Count} records", recordsList.Count);
+        return await BulkIndexRecordsAsync(recordsList);
     }
 
     /// <summary>
@@ -173,12 +202,18 @@ public class ElasticsearchClientProxy
         IEnumerable<SearchRecord> searchRecords,
         Action<BulkDescriptor> configureBulk = null)
     {
+        using var activity = _activitySource.StartActivity("BulkIndexRecords");
+        var recordsList = searchRecords.ToList();
+        activity?.SetTag("recordCount", recordsList.Count);
+        
+        var stopwatch = Stopwatch.StartNew();
+        
         var result = await ExecuteWithRetry(async () =>
         {
             var bulkDescriptor = new BulkDescriptor().Index("offerings");
             
             // Add each record to the bulk descriptor
-            foreach (var record in searchRecords)
+            foreach (var record in recordsList)
             {
                 bulkDescriptor.Index<SearchRecord>(i => i
                     .Id(record.Id)
@@ -215,10 +250,27 @@ public class ElasticsearchClientProxy
                         itemWithError.Id, itemWithError.Error?.Reason);
                 }
                 bulkResult.Errors = errors;
+                
+                activity?.SetStatus(ActivityStatusCode.Error, $"Bulk indexing completed with {errors.Count} errors");
             }
             
             return bulkResult;
         });
+        
+        stopwatch.Stop();
+        activity?.SetTag("durationMs", stopwatch.ElapsedMilliseconds);
+        
+        if (result != null)
+        {
+            _logger.Information("Bulk indexing completed in {ElapsedMilliseconds}ms with {ErrorCount} errors", 
+                stopwatch.ElapsedMilliseconds, 
+                result.HasErrors ? result.Errors.Count : 0);
+        }
+        else
+        {
+            _logger.Error("Bulk indexing failed after retries");
+            activity?.SetStatus(ActivityStatusCode.Error, "Bulk indexing failed after retries");
+        }
         
         return result ?? new BulkIndexResult { IsValid = false, HasErrors = true };
     }

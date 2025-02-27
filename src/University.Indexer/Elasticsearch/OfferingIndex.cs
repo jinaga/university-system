@@ -1,4 +1,3 @@
-using Jinaga;
 using University.Model;
 
 namespace University.Indexer.Elasticsearch;

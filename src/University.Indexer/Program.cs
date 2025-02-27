@@ -7,6 +7,7 @@ using Serilog;
 
 using University.Common;
 using University.Indexer;
+using University.Indexer.Elasticsearch;
 using University.Indexer.Services;
 using University.Model;
 
@@ -55,7 +56,7 @@ try
     
     await consoleApp.RunAsync(async () =>
     {
-        var elasticsearchClient = new ElasticsearchClientProxy(ELASTICSEARCH_URL, logger);
+        var elasticsearchClient = new ElasticsearchClientProxy(ELASTICSEARCH_URL, logger, activitySource);
     
         await elasticsearchClient.Initialize();
     
