@@ -171,7 +171,7 @@ namespace University.Indexer.Elasticsearch
                 
                 using var indexActivity = activitySource.StartActivity("BulkIndexRecords");
                 // Use bulk indexing instead of individual indexing
-                var result = await elasticsearchClient.IndexManyRecordsAsync(searchRecords);
+                var result = await elasticsearchClient.IndexManyRecords(searchRecords);
                 indexActivity?.SetTag("success", result.IsValid);
                 indexActivity?.SetTag("hasErrors", result.HasErrors);
                 

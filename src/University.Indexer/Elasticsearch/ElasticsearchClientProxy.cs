@@ -186,14 +186,14 @@ public class ElasticsearchClientProxy
     /// </summary>
     /// <param name="searchRecords">The collection of search records to index.</param>
     /// <returns>A result object containing information about the bulk operation.</returns>
-    public async Task<BulkIndexResult> IndexManyRecordsAsync(IEnumerable<SearchRecord> searchRecords)
+    public async Task<BulkIndexResult> IndexManyRecords(IEnumerable<SearchRecord> searchRecords)
     {
         using var activity = _activitySource.StartActivity("IndexManyRecords");
         var recordsList = searchRecords.ToList();
         activity?.SetTag("recordCount", recordsList.Count);
         
         _logger.Debug("Bulk indexing {Count} records", recordsList.Count);
-        return await BulkIndexRecordsAsync(recordsList);
+        return await BulkIndexRecords(recordsList);
     }
 
     /// <summary>
@@ -202,7 +202,7 @@ public class ElasticsearchClientProxy
     /// <param name="searchRecords">The collection of search records to index.</param>
     /// <param name="configureBulk">Optional action to configure the bulk descriptor.</param>
     /// <returns>A result object containing information about the bulk operation.</returns>
-    public async Task<BulkIndexResult> BulkIndexRecordsAsync(
+    public async Task<BulkIndexResult> BulkIndexRecords(
         IEnumerable<SearchRecord> searchRecords,
         Action<BulkDescriptor> configureBulk = null)
     {
