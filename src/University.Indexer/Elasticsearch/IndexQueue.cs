@@ -186,6 +186,25 @@ namespace University.Indexer.Elasticsearch
                 }
                 else
                 {
+                    // Record the bookkeeping facts about the indexing operation
+                    foreach (var kvp in currentOfferings)
+                    {
+                        string recordId = kvp.Key;
+                        var index = kvp.Value;
+                        var searchIndexRecord = await jinagaClient.Fact(new SearchIndexRecord(index.offering, recordId));
+                        if (index.time != null)
+                        {
+                            await jinagaClient.Fact(new SearchIndexRecordTimeUpdate(searchIndexRecord, index.time));
+                        }
+                        if (index.location != null)
+                        {
+                            await jinagaClient.Fact(new SearchIndexRecordLocationUpdate(searchIndexRecord, index.location));
+                        }
+                        if (index.instructor != null)
+                        {
+                            await jinagaClient.Fact(new SearchIndexRecordInstructorUpdate(searchIndexRecord, index.instructor));
+                        }
+                    }
                     successCount = searchRecords.Count;
                     logger.Information("Successfully indexed {Count} offerings", successCount);
                 }
