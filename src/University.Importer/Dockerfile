@@ -2,6 +2,7 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 COPY ["University.Importer/University.Importer.csproj", "University.Importer/"]
 COPY ["University.Model/University.Model.csproj", "University.Model/"]
+COPY ["University.Common/University.Common.csproj", "University.Common/"]
 RUN dotnet restore "University.Importer/University.Importer.csproj"
 COPY . .
 WORKDIR "/src/University.Importer"

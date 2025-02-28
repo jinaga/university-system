@@ -5,6 +5,7 @@ using System.Diagnostics;
 using University.Common;
 using University.Model;
 using ILogger = Serilog.ILogger;
+using University.Indexer.Elasticsearch;
 
 namespace University.Indexer.Services;
 
