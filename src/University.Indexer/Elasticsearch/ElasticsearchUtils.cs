@@ -1,7 +1,5 @@
 using Nest;
 using Serilog;
-using System;
-using System.Threading.Tasks;
 
 namespace University.Indexer.Elasticsearch
 {
