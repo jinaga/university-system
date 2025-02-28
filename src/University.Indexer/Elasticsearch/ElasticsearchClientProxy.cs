@@ -13,8 +13,8 @@ public class BulkIndexResult
 
 public class BulkError
 {
-    public string Id { get; set; }
-    public string Error { get; set; }
+    public string Id { get; set; } = string.Empty;
+    public string Error { get; set; } = string.Empty;
 }
 
 public class ElasticsearchClientProxy
@@ -67,7 +67,7 @@ public class ElasticsearchClientProxy
         }
     }
 
-    private async Task<T> ExecuteWithRetry<T>(Func<Task<T>> action)
+    private async Task<T?> ExecuteWithRetry<T>(Func<Task<T>> action)
     {
         int retryCount = 0;
         const int maxRetries = 10;
@@ -204,7 +204,7 @@ public class ElasticsearchClientProxy
     /// <returns>A result object containing information about the bulk operation.</returns>
     public async Task<BulkIndexResult> BulkIndexRecords(
         IEnumerable<SearchRecord> searchRecords,
-        Action<BulkDescriptor> configureBulk = null)
+        Action<BulkDescriptor>? configureBulk = null)
     {
         using var activity = _activitySource.StartActivity("BulkIndexRecords");
         var recordsList = searchRecords.ToList();
@@ -318,6 +318,6 @@ public class ElasticsearchClientProxy
             await ElasticsearchUtils.ReallocateUnassignedShards(client, _logger);
         }
         
-        return result ?? new BulkIndexResult { IsValid = false, HasErrors = true };
+        return result ?? new BulkIndexResult { IsValid = false, HasErrors = true, Errors = Array.Empty<BulkError>() };
     }
 }

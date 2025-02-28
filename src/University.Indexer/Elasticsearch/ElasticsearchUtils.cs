@@ -37,7 +37,7 @@ namespace University.Indexer.Elasticsearch
                 {
                     if (indexSettings.Settings.TryGetValue("index.blocks.read_only_allow_delete", out var readOnlySetting))
                     {
-                        isReadOnly = readOnlySetting.ToString().ToLowerInvariant() == "true";
+                        isReadOnly = readOnlySetting?.ToString()?.ToLowerInvariant() == "true";
                     }
                 }
                 
@@ -71,7 +71,7 @@ namespace University.Indexer.Elasticsearch
                 // Attempt to clear the read-only flag
                 var updateResponse = await client.UpdateIndexSettingsAsync(indexName, u => u
                     .IndexSettings(s => s
-                        .Setting("index.blocks.read_only_allow_delete", (string)null)
+                        .Setting("index.blocks.read_only_allow_delete", null)
                     )
                 );
                 
