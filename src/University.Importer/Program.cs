@@ -61,8 +61,7 @@ try
         var meter = new Meter("University.Importer", "1.0.0");
 
         var serviceRunner = new ServiceRunner(logger)
-            .WithService(new CsvFileWatcher(j, university, IMPORT_DATA_PATH, PROCESSED_DATA_PATH, ERROR_DATA_PATH, meter, logger))
-            .WithService(new Firehose(j, university, meter, logger));
+            .WithService(new CsvFileWatcher(j, university, IMPORT_DATA_PATH, PROCESSED_DATA_PATH, ERROR_DATA_PATH, meter, logger));
         await serviceRunner.Start();
 
         return async () =>

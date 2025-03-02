@@ -4,6 +4,8 @@ using Serilog;
 using University.Common;
 using University.Model;
 
+namespace University.Firehose;
+
 internal class Firehose : IService
 {
     private readonly JinagaClient _j;
