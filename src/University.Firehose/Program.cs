@@ -48,13 +48,11 @@ try
 
         var meter = new Meter("University.Firehose", "1.0.0");
 
-        var serviceRunner = new ServiceRunner(logger)
-            .WithService(new Firehose(j, university, meter, logger));
-        await serviceRunner.Start();
+        // Instead of starting the service immediately, run the interactive menu
+        await RunInteractiveMenu(j, university, meter, logger);
 
         return async () =>
         {
-            await serviceRunner.Stop();
             await j.DisposeAsync();
         };
     });
@@ -67,4 +65,118 @@ catch (Exception ex)
 finally
 {
     Log.CloseAndFlush();
+}
+
+// Interactive menu for the firehose application
+static async Task RunInteractiveMenu(JinagaClient j, Organization university, Meter meter, ILogger logger)
+{
+    var firehose = new Firehose(j, university, meter, logger);
+    bool running = true;
+    
+    // Display menu once at startup
+    DisplayMenu();
+    
+    // Define the event handler for Ctrl+C at the menu level
+    ConsoleCancelEventHandler menuCancelHandler = (s, e) => {
+        e.Cancel = true;
+        running = false;
+    };
+    
+    // Add the event handler
+    Console.CancelKeyPress += menuCancelHandler;
+    
+    try
+    {
+        while (running)
+        {
+            // Wait for user input
+            string? input = Console.ReadLine();
+            string command = input?.Trim().ToLower() ?? "";
+            
+            switch (command)
+            {
+                case "":
+                    // Empty line, redisplay menu
+                    DisplayMenu();
+                    break;
+                    
+                case "1":
+                    // Set target rate
+                    Console.Write("Enter target rate (offerings per second): ");
+                    string? rateInput = Console.ReadLine();
+                    if (rateInput != null && int.TryParse(rateInput, out int rate))
+                    {
+                        firehose.SetTargetRate(rate);
+                        Console.WriteLine($"Target rate set to {rate} offerings per second.");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid rate. Please enter a number.");
+                    }
+                    break;
+                    
+                case "2":
+                    // Start firehose
+                    Console.WriteLine("Starting firehose. Press Ctrl+C to stop and return to menu.");
+                    
+                    // Remove the menu-level Ctrl+C handler
+                    Console.CancelKeyPress -= menuCancelHandler;
+                    
+                    // Setup cancellation for firehose
+                    var cts = new CancellationTokenSource();
+                    
+                    // Add firehose-specific Ctrl+C handler
+                    ConsoleCancelEventHandler firehoseCancelHandler = (s, e) => {
+                        e.Cancel = true;
+                        cts.Cancel();
+                    };
+                    Console.CancelKeyPress += firehoseCancelHandler;
+                    
+                    await firehose.Start();
+                    
+                    try {
+                        await Task.Delay(-1, cts.Token); // Wait indefinitely until cancelled
+                    }
+                    catch (OperationCanceledException) {
+                        // Ctrl+C was pressed
+                    }
+                    finally {
+                        await firehose.Stop();
+                        Console.WriteLine("Firehose stopped.");
+                        
+                        // Remove the firehose-specific handler
+                        Console.CancelKeyPress -= firehoseCancelHandler;
+                        
+                        // Restore the menu-level handler
+                        Console.CancelKeyPress += menuCancelHandler;
+                        
+                        // Show menu after stopping firehose
+                        DisplayMenu();
+                    }
+                    break;
+                    
+                case "exit":
+                case "quit":
+                    running = false;
+                    break;
+                    
+                default:
+                    Console.WriteLine("Unknown command. Please try again.");
+                    break;
+            }
+        }
+    }
+    finally
+    {
+        // Ensure we remove the event handler when exiting
+        Console.CancelKeyPress -= menuCancelHandler;
+    }
+}
+
+static void DisplayMenu()
+{
+    Console.WriteLine("\n=== University.Firehose Menu ===");
+    Console.WriteLine("1. Set target rate (offerings per second)");
+    Console.WriteLine("2. Start firehose");
+    Console.WriteLine("\nEnter command (or press Enter to redisplay menu):");
 }

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Jinaga;
 using Serilog;
@@ -14,6 +15,9 @@ internal class Firehose : IService
     private readonly ILogger _logger;
 
     private CancellationTokenSource _finish = new();
+    private int _targetRatePerSecond = 10; // Default rate
+    private int _currentCount = 0;
+    private bool _displayEnabled = false;
 
     public Firehose(JinagaClient j, Organization university, Meter meter, ILogger logger)
     {
@@ -23,8 +27,43 @@ internal class Firehose : IService
         _logger = logger;
     }
 
+    // Method to set the target rate
+    public void SetTargetRate(int ratePerSecond)
+    {
+        _targetRatePerSecond = Math.Max(1, ratePerSecond); // Ensure minimum of 1/second
+    }
+
     public Task Start()
     {
+        _finish = new CancellationTokenSource();
+        _displayEnabled = true;
+        
+        // Start display task
+        Task.Run(async () => {
+            try
+            {
+                while (_displayEnabled && !_finish.Token.IsCancellationRequested)
+                {
+                    if (_displayEnabled)
+                    {
+                        Console.SetCursorPosition(0, Console.CursorTop);
+                        Console.Write($"Offerings created: {_currentCount}/second (Target: {_targetRatePerSecond}/second)");
+                    }
+                    await Task.Delay(1000, _finish.Token);
+                    _currentCount = 0; // Reset counter each second
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Normal cancellation, no need to log
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error in display task.");
+            }
+        }, _finish.Token);
+        
+        // Main firehose task
         Task.Run(async () =>
         {
             try
@@ -67,10 +106,13 @@ internal class Firehose : IService
                 string[] possibleRooms = ["101", "102", "103", "104"];
 
                 var counter = _meter.CreateCounter<int>("university.offering.created");
+                var stopwatch = new Stopwatch();
 
                 // Keep running until the task is cancelled
                 while (!_finish.Token.IsCancellationRequested)
                 {
+                    stopwatch.Restart();
+                    
                     var course = courses[random.Next(courses.Count)];
                     var semester = semesters[random.Next(semesters.Count)];
                     var instructor = instructors[random.Next(instructors.Count)];
@@ -83,10 +125,31 @@ internal class Firehose : IService
                     await _j.Fact(new OfferingTime(offering, days, time, []));
                     await _j.Fact(new OfferingInstructor(offering, instructor, []));
 
+                    _currentCount++;
                     counter.Add(1);
-
-                    await Task.Delay(100, _finish.Token);
+                    
+                    stopwatch.Stop();
+                    
+                    // Calculate remaining delay time
+                    int targetDelayMs = 1000 / _targetRatePerSecond;
+                    int elapsedMs = (int)stopwatch.ElapsedMilliseconds;
+                    int remainingDelayMs = Math.Max(0, targetDelayMs - elapsedMs);
+                    
+                    if (remainingDelayMs > 0)
+                    {
+                        await Task.Delay(remainingDelayMs, _finish.Token);
+                    }
+                    else if (elapsedMs > targetDelayMs)
+                    {
+                        // Log if we're consistently taking longer than our target rate allows
+                        _logger.Warning("Creating offering took {ElapsedMs}ms, which exceeds the target delay of {TargetDelayMs}ms", 
+                            elapsedMs, targetDelayMs);
+                    }
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                // Normal cancellation, no need to log
             }
             catch (Exception ex)
             {
@@ -98,7 +161,9 @@ internal class Firehose : IService
 
     public Task Stop()
     {
+        _displayEnabled = false;
         _finish.Cancel();
+        Console.WriteLine(); // Move to next line after stopping
         return Task.CompletedTask;
     }
 }

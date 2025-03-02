@@ -12,4 +12,4 @@ RUN dotnet publish "University.Firehose.csproj" -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
 COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "University.Firehose.dll"]
+ENTRYPOINT ["tail", "-f", "/dev/null"]
