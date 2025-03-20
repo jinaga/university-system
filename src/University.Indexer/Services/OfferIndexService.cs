@@ -17,7 +17,7 @@ public class OfferIndexService : IService
     private readonly Counter<long> offeringsIndexedCounter;
     private readonly Semester currentSemester;
     private readonly ActivitySource activitySource = new ActivitySource("University.Indexer");
-    private dynamic? subscription;
+    private IObserver? subscription;
 
     public OfferIndexService(
         JinagaClient jinagaClient,
