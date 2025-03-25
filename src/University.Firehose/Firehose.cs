@@ -118,10 +118,10 @@ internal class Firehose : IService
                 // Keep running until the task is cancelled
                 while (!_finish.Token.IsCancellationRequested)
                 {
+                    stopwatch.Restart();
+                    
                     using (var activity = _activitySource.StartActivity("CreateOffering"))
                     {
-                        stopwatch.Restart();
-                        
                         var course = courses[random.Next(courses.Count)];
                         activity?.SetTag("course.code", course.code);
                         var semester = semesters[random.Next(semesters.Count)];
@@ -143,24 +143,24 @@ internal class Firehose : IService
                         
                         // Mark activity as successful
                         activity?.SetStatus(ActivityStatusCode.Ok);
-                        
-                        stopwatch.Stop();
-                        
-                        // Calculate remaining delay time
-                        int targetDelayMs = 1000 / _targetRatePerSecond;
-                        int elapsedMs = (int)stopwatch.ElapsedMilliseconds;
-                        int remainingDelayMs = Math.Max(0, targetDelayMs - elapsedMs);
-                        
-                        if (remainingDelayMs > 0)
-                        {
-                            await Task.Delay(remainingDelayMs, _finish.Token);
-                        }
-                        else if (elapsedMs > targetDelayMs)
-                        {
-                            // Log if we're consistently taking longer than our target rate allows
-                            _logger.Warning("Creating offering took {ElapsedMs}ms, which exceeds the target delay of {TargetDelayMs}ms", 
-                                elapsedMs, targetDelayMs);
-                        }
+                    }
+                    
+                    stopwatch.Stop();
+                    
+                    // Calculate remaining delay time
+                    int targetDelayMs = 1000 / _targetRatePerSecond;
+                    int elapsedMs = (int)stopwatch.ElapsedMilliseconds;
+                    int remainingDelayMs = Math.Max(0, targetDelayMs - elapsedMs);
+                    
+                    if (remainingDelayMs > 0)
+                    {
+                        await Task.Delay(remainingDelayMs, _finish.Token);
+                    }
+                    else if (elapsedMs > targetDelayMs)
+                    {
+                        // Log if we're consistently taking longer than our target rate allows
+                        _logger.Warning("Creating offering took {ElapsedMs}ms, which exceeds the target delay of {TargetDelayMs}ms", 
+                            elapsedMs, targetDelayMs);
                     }
                 }
             }
