@@ -53,8 +53,8 @@ internal class Firehose : IService
                         Console.SetCursorPosition(0, lineNo);
                         Console.Write($"Offerings created: {_currentCount}/second (Target: {_targetRatePerSecond}/second)");
                     }
-                    await Task.Delay(1000, _finish.Token);
                     _currentCount = 0; // Reset counter each second
+                    await Task.Delay(1000, _finish.Token);
                 }
             }
             catch (OperationCanceledException)
