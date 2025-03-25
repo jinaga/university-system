@@ -9,6 +9,9 @@ namespace University.Firehose;
 
 internal class Firehose : IService
 {
+    // Define the ActivitySource for OpenTelemetry tracing
+    private static readonly ActivitySource _activitySource = new ActivitySource("University.Firehose");
+
     private readonly JinagaClient _j;
     private readonly Organization _university;
     private readonly Meter _meter;
@@ -115,39 +118,49 @@ internal class Firehose : IService
                 // Keep running until the task is cancelled
                 while (!_finish.Token.IsCancellationRequested)
                 {
-                    stopwatch.Restart();
-                    
-                    var course = courses[random.Next(courses.Count)];
-                    var semester = semesters[random.Next(semesters.Count)];
-                    var instructor = instructors[random.Next(instructors.Count)];
-                    var days = possibleDays[random.Next(possibleDays.Length)];
-                    var time = (8 + random.Next(12)).ToString() + ":00";
-                    var building = possibleBuildings[random.Next(possibleBuildings.Length)];
-                    var room = possibleRooms[random.Next(possibleRooms.Length)];
-                    var offering = await _j.Fact(new Offering(course, semester, Guid.NewGuid()));
-                    await _j.Fact(new OfferingLocation(offering, building, room, []));
-                    await _j.Fact(new OfferingTime(offering, days, time, []));
-                    await _j.Fact(new OfferingInstructor(offering, instructor, []));
+                    using (var activity = _activitySource.StartActivity("CreateOffering"))
+                    {
+                        stopwatch.Restart();
+                        
+                        var course = courses[random.Next(courses.Count)];
+                        activity?.SetTag("course.code", course.code);
+                        var semester = semesters[random.Next(semesters.Count)];
+                        activity?.SetTag("semester", $"{semester.year} {semester.term}");
+                        
+                        var instructor = instructors[random.Next(instructors.Count)];
+                        activity?.SetTag("instructor", instructor.name);
+                        var days = possibleDays[random.Next(possibleDays.Length)];
+                        var time = (8 + random.Next(12)).ToString() + ":00";
+                        var building = possibleBuildings[random.Next(possibleBuildings.Length)];
+                        var room = possibleRooms[random.Next(possibleRooms.Length)];
+                        var offering = await _j.Fact(new Offering(course, semester, Guid.NewGuid()));
+                        await _j.Fact(new OfferingLocation(offering, building, room, []));
+                        await _j.Fact(new OfferingTime(offering, days, time, []));
+                        await _j.Fact(new OfferingInstructor(offering, instructor, []));
 
-                    _currentCount++;
-                    counter.Add(1);
-                    
-                    stopwatch.Stop();
-                    
-                    // Calculate remaining delay time
-                    int targetDelayMs = 1000 / _targetRatePerSecond;
-                    int elapsedMs = (int)stopwatch.ElapsedMilliseconds;
-                    int remainingDelayMs = Math.Max(0, targetDelayMs - elapsedMs);
-                    
-                    if (remainingDelayMs > 0)
-                    {
-                        await Task.Delay(remainingDelayMs, _finish.Token);
-                    }
-                    else if (elapsedMs > targetDelayMs)
-                    {
-                        // Log if we're consistently taking longer than our target rate allows
-                        _logger.Warning("Creating offering took {ElapsedMs}ms, which exceeds the target delay of {TargetDelayMs}ms", 
-                            elapsedMs, targetDelayMs);
+                        _currentCount++;
+                        counter.Add(1);
+                        
+                        // Mark activity as successful
+                        activity?.SetStatus(ActivityStatusCode.Ok);
+                        
+                        stopwatch.Stop();
+                        
+                        // Calculate remaining delay time
+                        int targetDelayMs = 1000 / _targetRatePerSecond;
+                        int elapsedMs = (int)stopwatch.ElapsedMilliseconds;
+                        int remainingDelayMs = Math.Max(0, targetDelayMs - elapsedMs);
+                        
+                        if (remainingDelayMs > 0)
+                        {
+                            await Task.Delay(remainingDelayMs, _finish.Token);
+                        }
+                        else if (elapsedMs > targetDelayMs)
+                        {
+                            // Log if we're consistently taking longer than our target rate allows
+                            _logger.Warning("Creating offering took {ElapsedMs}ms, which exceeds the target delay of {TargetDelayMs}ms", 
+                                elapsedMs, targetDelayMs);
+                        }
                     }
                 }
             }
