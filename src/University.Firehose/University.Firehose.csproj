@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Jinaga.Store.SQLite" Version="1.1.4" />
+    <PackageReference Include="Jinaga.Store.SQLite" Version="1.1.10" />
   </ItemGroup>
 
 </Project>
