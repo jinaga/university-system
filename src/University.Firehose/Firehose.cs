@@ -15,7 +15,7 @@ internal class Firehose : IService
     private readonly ILogger _logger;
 
     private CancellationTokenSource _finish = new();
-    private int _targetRatePerSecond = 10; // Default rate
+    private int _targetRatePerSecond = 1;  // Default rate
     private int _currentCount = 0;
     private bool _displayEnabled = false;
 
@@ -42,11 +42,15 @@ internal class Firehose : IService
         Task.Run(async () => {
             try
             {
+                // Capture the current line number
+                var lineNo = Console.CursorTop;
+
                 while (_displayEnabled && !_finish.Token.IsCancellationRequested)
                 {
                     if (_displayEnabled)
                     {
-                        Console.SetCursorPosition(0, Console.CursorTop);
+                        // Set the cursor position before outputting our progress
+                        Console.SetCursorPosition(0, lineNo);
                         Console.Write($"Offerings created: {_currentCount}/second (Target: {_targetRatePerSecond}/second)");
                     }
                     await Task.Delay(1000, _finish.Token);
