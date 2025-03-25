@@ -54,6 +54,16 @@ The demo shows two processes communicating via a replicator. One process is the 
 
 Use Jaeger, Grafana, and Prometheus to view traces, logs, and metrics.
 
+### Running the Firehose
+
+The firehose is a console application that continuously publishes new offerings to the replicator. Start the firehose after starting the mesh with the following command.
+
+```bash
+docker exec -i university-mesh-firehose-1 ./start.sh
+```
+
+Then use the onscreen menu to set the target rate and run the firehose. Type `exit` or `quit` to exit the application.
+
 ## Telemetry and tracing
 
 This project uses OpenTelemetry for collecting telemetry data and Jaeger for visualizing traces, Grafana and Loki for log aggregation and visualization, and Prometheus for analyzing metrics. This helps in monitoring and debugging the system by providing insights into the application's performance and behavior.
