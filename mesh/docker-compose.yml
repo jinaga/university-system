@@ -20,7 +20,7 @@ services:
       - esdata:/usr/share/elasticsearch/data
 
   back-end-replicator:
-    image: jinaga/jinaga-replicator:3.4.0
+    image: jinaga/jinaga-replicator:3.4.3
     container_name: back-end-replicator
     ports:
       - "8080:8080"
@@ -65,6 +65,18 @@ services:
     depends_on:
       - back-end-replicator
       - elasticsearch
+      - otel-collector
+
+  firehose:
+    build:
+      context: ../src
+      dockerfile: University.Firehose/Dockerfile
+    environment:
+      - REPLICATOR_URL=http://back-end-replicator:8080/jinaga
+      - ENVIRONMENT_PUBLIC_KEY=default-public-key
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+    depends_on:
+      - back-end-replicator
       - otel-collector
 
   otel-collector:

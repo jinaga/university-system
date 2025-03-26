@@ -54,6 +54,16 @@ The demo shows two processes communicating via a replicator. One process is the 
 
 Use Jaeger, Grafana, and Prometheus to view traces, logs, and metrics.
 
+### Running the Firehose
+
+The firehose is a console application that continuously publishes new offerings to the replicator. Start the firehose after starting the mesh with the following command.
+
+```bash
+docker exec -i university-mesh-firehose-1 ./start.sh
+```
+
+Then use the onscreen menu to set the target rate and run the firehose. Type `exit` or `quit` to exit the application.
+
 ## Telemetry and tracing
 
 This project uses OpenTelemetry for collecting telemetry data and Jaeger for visualizing traces, Grafana and Loki for log aggregation and visualization, and Prometheus for analyzing metrics. This helps in monitoring and debugging the system by providing insights into the application's performance and behavior.
@@ -91,33 +101,60 @@ After starting the services with `docker compose up -v --build`, follow these st
    - Select "Loki" as the data source if it is not already selected
    - View the logs by service
 
-### Viewing metrics in Prometheus
+### Viewing metrics in Grafana
 
-1. Open a web browser and navigate to `http://localhost:9090`.
-2. Use the Prometheus UI to run queries and view metrics collected by the OpenTelemetry Collector.
+1. Add the Prometheus data source to Grafana.
+   - Open a web browser and navigate to `http://localhost:3000`.
+   - Log in with the default credentials:
+     * Username: admin
+     * Password: admin
+   - You may be prompted to change the password, which you can skip for now.
+   - Click on the "Configuration" gear icon in the left sidebar.
+   - Select "Data Sources".
+   - Click "Add data source".
+   - Search for and select "Prometheus".
+   - Set the following configuration:
+     * URL: `http://prometheus:9090`
+     * Leave other settings at their defaults.
+   - Click "Save & test" to verify the connection.
+2. Explore metrics.
+   - Expand the "Explore" menu in the left sidebar.
+   - Click on "Metrics" under "Explore".
+   - Click "Select" on one of the graphs to configure it.
+   - Click on the compass icon labeled "Open in explore".
+   - In the new tab, copy the query for use in the dashboard.
+3. Build a dashboard.
+   - Expand the "Create" menu in the left sidebar.
+   - Click on "Dashboard" under "Create".
+   - Click on "Add new panel".
+   - Switch to the "Code" tab to use one of the example queries.
 
 #### Example Queries
 
 Use the following queries to check throughput:
 - Files processed by the Importer:
   ```prometheus
-  files_processed_total
+  sum(rate(files_processed_total{}[$__rate_interval]) )
   ```
 - Rows processed by the Importer:
   ```prometheus
-  rows_processed_total
+  sum(rate(rows_processed_total{}[$__rate_interval]) )
   ```
 - Offerings indexed by the Indexer:
   ```prometheus
-  offerings_indexed_total
+  sum(rate(offerings_indexed_total{}[$__rate_interval]) )
   ```
 - Facts saved by the Replicator:
   ```prometheus
-  facts_saved_total
+  sum(rate(facts_saved_total{}[$__rate_interval]) )
   ```
 - Facts loaded by the Replicator:
   ```prometheus
-  facts_loaded_total
+  sum(rate(facts_loaded_total{}[$__rate_interval]) )
+  ```
+- Warnings in the Replicator:
+  ```loki
+  {service_name="back-end-replicator"} | json | logfmt | drop __error__, __error_details__ | severity="WARN"
   ```
 
-These queries show how many files, rows, and offerings have been processed in the last five minutes, helping you monitor the system's throughput.
+These queries show the rate of files, rows, offerings, facts saved, and facts loaded over the selected interval.
