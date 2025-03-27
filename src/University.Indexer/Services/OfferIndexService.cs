@@ -53,12 +53,21 @@ public class OfferIndexService : IService
 
         subscription = jinagaClient.Subscribe(offeringsToIndex, currentSemester, projection =>
         {
+            using var activity = activitySource.StartActivity("IndexOffering");
+            var offeringId = projection.Offering.guid;
+            logger.Information("Indexing offering {OfferingId}", offeringId);
+            
             indexQueue.PushOffering(projection.Offering);
             projection.Times.OnAdded(time => indexQueue.PushOfferingTime(time));
             projection.Locations.OnAdded(location => indexQueue.PushOfferingLocation(location));
             projection.Instructors.OnAdded(instructor => indexQueue.PushOfferingInstructor(instructor));
-
-            return () => indexQueue.RemoveOffering(projection.Offering);
+            
+            offeringsIndexedCounter.Add(1, new KeyValuePair<string, object?>("offering_id", offeringId));
+            
+            return () => {
+                logger.Information("Removing offering {OfferingId} from index", projection.Offering.guid);
+                indexQueue.RemoveOffering(projection.Offering);
+            };
         });
         return Task.CompletedTask;
     }
